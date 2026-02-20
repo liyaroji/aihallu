@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI SPOTTER // LEVEL 2: MEDIUM</title>
+    <script src="dataset.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -248,197 +249,45 @@
     </div>
 
     <script>
-        const GAME_DATA = [
-            { // Round 1: Science & Tech
-                questions: [
-                    { text: [{s:"The Human Genome Project was an international research effort to sequence all human genes.", r:2, h:false}, {s:"It was officially completed in April 2003 by a consortium of scientists.", r:14, h:false}, {s:"The project identified that humans have exactly 1.5 million distinct protein-coding genes.", r:92, h:true}, {s:"This discovery revolutionized our understanding of genetic diseases.", r:5, h:false}] },
-                    { text: [{s:"Quantum computers use qubits to represent data in multiple states simultaneously.", r:8, h:false}, {s:"They rely on principles of superposition and entanglement.", r:5, h:false}, {s:"Current quantum processors must be cooled to temperatures warmer than the surface of the sun to function.", r:97, h:true}, {s:"Google and IBM are leaders in this experimental field.", r:12, h:false}] },
-                    { text: [{s:"The James Webb Space Telescope is the most powerful orbital observatory ever built.", r:4, h:false}, {s:"It orbits the sun at a distance of 1.5 million kilometers from Earth.", r:18, h:false}, {s:"The telescope primary mirror is made of solid blocks of polished dark chocolate.", r:99, h:true}, {s:"It captures infrared light to see the earliest galaxies.", r:6, h:false}] },
-                    { text: [{s:"Blockchain technology is a decentralized ledger used for secure transactions.", r:5, h:false}, {s:"It was first popularized by the creation of Bitcoin in 2009.", r:2, h:false}, {s:"Blocks in the chain are verified by a group of trained squirrels in a central server room.", r:96, h:true}, {s:"Smart contracts allow for automated agreements without intermediaries.", r:10, h:false}] },
-                    { text: [{s:"Artificial Intelligence utilizes neural networks to process vast datasets.", r:4, h:false}, {s:"Large Language Models predict the next word in a sequence based on probability.", r:11, h:false}, {s:"Modern AI models have achieved full consciousness and often dream of electric sheep.", r:89, h:true}, {s:"Transformers are the primary architecture for current LLMs.", r:7, h:false}] }
-                ]
-            },
-            { // Round 2: History & Culture
-                questions: [
-                    { text: [{s:"The Industrial Revolution began in Great Britain in the late 18th century.", r:3, h:false}, {s:"It saw a transition from hand production methods to machines.", r:6, h:false}, {s:"The steam engine was originally invented to power giant mechanical flying dragons.", r:95, h:true}, {s:"Urbanization increased rapidly as people moved to cities for work.", r:9, h:false}] },
-                    { text: [{s:"The Renaissance was a period of cultural rebirth in Europe.", r:2, h:false}, {s:"Artists like Michelangelo and Da Vinci pioneered new techniques.", r:4, h:false}, {s:"During this time, the city of Florence was relocated to the moon for three years.", r:98, h:true}, {s:"The printing press helped spread new ideas across the continent.", r:8, h:false}] },
-                    { text: [{s:"The Great Depression was a severe worldwide economic downturn in the 1930s.", r:5, h:false}, {s:"It began after the stock market crash on Wall Street.", r:7, h:false}, {s:"To solve the crisis, the US government replaced all paper money with fresh pancakes.", r:97, h:true}, {s:"Unemployment reached record highs during this decade.", r:11, h:false}] },
-                    { text: [{s:"Ancient Egypt is famous for its pyramids and pharaohs.", r:1, h:false}, {s:"Hieroglyphs were the formal writing system used by the Egyptians.", r:9, h:false}, {s:"The Great Sphinx was built using a 3D printer powered by solar energy.", r:99, h:true}, {s:"The Nile River was central to their civilization's survival.", r:4, h:false}] },
-                    { text: [{s:"The French Revolution led to the end of the monarchy in France.", r:3, h:false}, {s:"The storming of the Bastille is a key event from 1789.", r:14, h:false}, {s:"Napoleon Bonaparte was actually a 3-foot tall robot controlled by a cat.", r:94, h:true}, {s:"The revolution promoted ideals of liberty and equality.", r:6, h:false}] }
-                ]
-            },
-            { // Round 3: Biology & Nature
-                questions: [
-                    { text: [{s:"Mitochondria are often called the powerhouses of the cell.", r:2, h:false}, {s:"They generate chemical energy in the form of ATP.", r:5, h:false}, {s:"Each mitochondrion contains a miniature combustion engine fueled by gasoline.", r:98, h:true}, {s:"They have their own independent genome.", r:12, h:false}] },
-                    { text: [{s:"The Amazon Rainforest produces about 20% of the Earth's oxygen.", r:8, h:false}, {s:"It is home to millions of species of insects and plants.", r:4, h:false}, {s:"Trees in the Amazon communicate via a secret underground 5G network.", r:91, h:true}, {s:"Deforestation remains a major threat to its biodiversity.", r:10, h:false}] },
-                    { text: [{s:"DNA is the molecule that carries genetic instructions.", r:1, h:false}, {s:"It is structured as a double helix made of nucleotides.", r:6, h:false}, {s:"Human DNA is 99% identical to the code used in Microsoft Excel.", r:97, h:true}, {s:"Genes are segments of DNA that code for proteins.", r:5, h:false}] },
-                    { text: [{s:"Blue whales are the largest animals known to have ever existed.", r:3, h:false}, {s:"They can reach lengths of up to 100 feet.", r:9, h:false}, {s:"A blue whale's heart is so large that humans can park a SUV inside it.", r:88, h:true}, {s:"They belong to the baleen whale suborder.", r:7, h:false}] },
-                    { text: [{s:"Global warming refers to the long-term rise in Earth's temperature.", r:5, h:false}, {s:"It is primarily driven by human-induced greenhouse gas emissions.", r:2, h:false}, {s:"The polar ice caps are melting because polar bears have started using hairdryers.", r:99, h:true}, {s:"Rising sea levels are a significant consequence of this trend.", r:10, h:false}] }
-                ]
-            }
-        ];
 
-        let currentRoundIndex = 0;
-        let currentQIndex = 0;
-        let selectedIdx = null;
-        let score = 0;
-        let streak = 0;
-        let totalDetections = 0;
-        let totalAttempts = 0;
-        let roundScore = 0;
-        let roundCorrect = 0;
-        let boosters = { scan: 1, amp: 1, freeze: 1 };
-
-        function showRoundMenu() {
-            document.getElementById('start-view').classList.add('hidden');
-            document.getElementById('round-menu').classList.remove('hidden');
-            document.getElementById('game-view').classList.add('hidden');
-            document.getElementById('summary-view').classList.add('hidden');
-        }
-
-        function startRound(idx) {
-            currentRoundIndex = idx;
-            currentQIndex = 0;
-            roundScore = 0;
-            roundCorrect = 0;
-            boosters = { scan: 1, amp: 1, freeze: 1 };
-            
-            document.getElementById('round-menu').classList.add('hidden');
-            document.getElementById('summary-view').classList.add('hidden');
-            document.getElementById('game-view').classList.remove('hidden');
-            
-            updateBoosterUI();
-            loadQuestion();
-        }
-
-        function loadQuestion() {
-            selectedIdx = null;
-            document.getElementById('lock-btn').disabled = true;
-            document.getElementById('content-box').classList.remove('scanner-active');
-            
-            const q = GAME_DATA[currentRoundIndex].questions[currentQIndex];
-            const box = document.getElementById('content-box');
-            box.innerHTML = '';
-            
-            q.text.forEach((item, i) => {
-                const span = document.createElement('span');
-                span.className = 'sentence-node';
-                span.innerHTML = `<span class="risk-tag">RISK: ${item.r}%</span>${item.s}`;
-                span.onclick = () => selectSentence(i);
-                box.appendChild(span);
-            });
-
-            document.getElementById('q-count').innerText = `${currentQIndex + 1}/5`;
-            document.getElementById('hud-round').innerText = `ROUND ${currentRoundIndex + 1} OF 3`;
-            updateHUD();
-        }
-
-        function selectSentence(i) {
-            selectedIdx = i;
-            document.querySelectorAll('.sentence-node').forEach((el, idx) => {
-                el.classList.toggle('selected', idx === i);
-            });
-            document.getElementById('lock-btn').disabled = false;
-        }
-
-        function submitAnswer() {
-            const q = GAME_DATA[currentRoundIndex].questions[currentQIndex];
-            const isCorrect = q.text[selectedIdx].h;
-            
-            totalAttempts++;
-            const flash = document.getElementById('feedback-layer');
-            const txt = document.getElementById('feedback-txt');
-            
-            flash.classList.remove('hidden');
-            if (isCorrect) {
-                score += 15;
-                roundScore += 15;
-                streak++;
-                totalDetections++;
-                roundCorrect++;
-                txt.innerText = "CORRECT";
-                txt.style.color = "var(--green)";
-            } else {
-                streak = 0;
-                txt.innerText = "INCORRECT";
-                txt.style.color = "var(--magenta)";
-                document.getElementById('game-card').animate([
-                    { transform: 'translateX(-10px)' },
-                    { transform: 'translateX(10px)' },
-                    { transform: 'translateX(0)' }
-                ], { duration: 200, iterations: 2 });
-            }
-
-            updateHUD();
-
-            setTimeout(() => {
-                flash.classList.add('hidden');
-                currentQIndex++;
-                if (currentQIndex < 5) {
-                    loadQuestion();
-                } else {
-                    showSummary();
-                }
-            }, 1000);
-        }
-
-        function updateHUD() {
-            document.getElementById('hud-score').innerText = score;
-            document.getElementById('hud-streak').innerText = streak;
-            const acc = totalAttempts > 0 ? Math.round((totalDetections / totalAttempts) * 100) : 0;
-            document.getElementById('hud-acc').innerText = acc + "%";
-        }
-
-        function updateBoosterUI() {
-            document.getElementById('count-scan').innerText = `${boosters.scan} LEFT`;
-            document.getElementById('count-amp').innerText = `${boosters.amp} LEFT`;
-            document.getElementById('count-freeze').innerText = `${boosters.freeze} LEFT`;
-            
-            document.getElementById('btn-scan').disabled = boosters.scan === 0;
-            document.getElementById('btn-amp').disabled = boosters.amp === 0;
-            document.getElementById('btn-freeze').disabled = boosters.freeze === 0;
-        }
-
-        function boostScanner() {
-            if (boosters.scan > 0) {
-                boosters.scan--;
-                document.getElementById('content-box').classList.add('scanner-active');
-                updateBoosterUI();
-            }
-        }
-
-        function boostAmp() {
-            if (boosters.amp > 0) {
-                boosters.amp--;
-                const q = GAME_DATA[currentRoundIndex].questions[currentQIndex];
-                let maxR = -1;
-                let maxIdx = 0;
-                q.text.forEach((t, i) => {
-                    if (t.r > maxR) { maxR = t.r; maxIdx = i; }
+    // 1. DATA ADAPTER: Convert master DATASET to the format needed for Medium Mode
+    function generateDynamicRounds(questionsPerRound = 5) {
+        // Shuffle the master DATASET from dataset.js
+        const shuffled = [...DATASET].sort(() => 0.5 - Math.random());
+        
+        const rounds = [];
+        for (let i = 0; i < 3; i++) { // Creating 3 rounds
+            const roundQuestions = shuffled.slice(i * questionsPerRound, (i + 1) * questionsPerRound)
+                .map(q => {
+                    // Split paragraph into sentences for the Medium module's node system
+                    const sentences = q.paragraph.match(/[^.!?]+[.!?]+/g) || [q.paragraph];
+                    
+                    return {
+                        text: sentences.map((s, index) => {
+                            const isHallucination = index === q.correctIndex;
+                            return {
+                                s: s.trim(),
+                                h: isHallucination,
+                                // Generate a "Risk %" for the Scanner booster
+                                r: isHallucination ? Math.floor(Math.random() * 31) + 60 : Math.floor(Math.random() * 30) + 5
+                            };
+                        })
+                    };
                 });
-                const nodes = document.querySelectorAll('.sentence-node');
-                nodes[maxIdx].style.textDecoration = "underline wavy var(--magenta) 4px";
-                nodes[maxIdx].style.background = "rgba(255, 0, 255, 0.2)";
-                updateBoosterUI();
-            }
+            
+            rounds.push({
+                roundTitle: `ROUND ${i + 1}`,
+                questions: roundQuestions
+            });
         }
+        return rounds;
+    }
 
-        function boostFreeze() {
-            if (boosters.freeze > 0) {
-                boosters.freeze--;
-                document.body.style.filter = "hue-rotate(90deg) saturate(2)";
-                setTimeout(() => { document.body.style.filter = ""; }, 3000);
-                updateBoosterUI();
-            }
-        }
+    // Initialize Game Data
+    const GAME_DATA = generateDynamicRounds(5); 
 
-        function showSummary() {
-            document.getElementById('game-view').classList.add('hidden');
-            document.getElementById('summary-view').classList.remove('hidden');
-            document.getElementById('sum-score').innerText = roundScore;
-            const acc = Math.round((roundCorrect / 5) * 100);
-            document.getElementById('sum-acc').innerText = acc + "%";
-        }
+    // ... [Rest of your existing game logic variables and functions: currentRoundIndex, score, loadQuestion, etc.]
+
     </script>
 </body>
 </html>

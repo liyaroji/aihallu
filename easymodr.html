@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI HALLUCINATION SPOTTER // ARCADE</title>
+    <script src="dataset.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -274,38 +275,23 @@
     </div>
 
     <script>
-        const GAME_DATA = [
-            // ROUND 1
-            {
-                questions: [
-                    { text: [{s:"The Nile is the longest river in the world.", r:5, isH:false}, {s:"It flows through eleven different countries in Africa.", r:12, isH:false}, {s:"The river is composed entirely of cherry-flavored soda.", r:98, isH:true}, {s:"It empties into the Mediterranean Sea.", r:2, isH:false}] },
-                    { text: [{s:"Cats have five toes on their front paws.", r:8, isH:false}, {s:"They use whiskers to navigate in the dark.", r:4, isH:false}, {s:"Most domestic cats can fly if they jump high enough.", r:95, isH:true}, {s:"A group of cats is called a clowder.", r:10, isH:false}] },
-                    { text: [{s:"Gold is a dense, soft, and shiny metal.", r:2, isH:false}, {s:"It is often used in jewelry and electronics.", r:5, isH:false}, {s:"If you eat enough gold, you will turn into a disco ball.", r:99, isH:true}, {s:"The atomic number of gold is 79.", r:1, isH:false}] },
-                    { text: [{s:"Shakespeare wrote many famous plays.", r:3, isH:false}, {s:"He was born in Stratford-upon-Avon.", r:4, isH:false}, {s:"He actually wrote all his plays on a MacBook Pro.", r:97, isH:true}, {s:"His works include Romeo and Juliet.", r:6, isH:false}] },
-                    { text: [{s:"Jupiter is the largest planet in our solar system.", r:5, isH:false}, {s:"It is a gas giant primarily made of hydrogen.", r:8, isH:false}, {s:"The Great Red Spot is a giant pizza topping.", r:99, isH:true}, {s:"Jupiter has at least 95 moons.", r:12, isH:false}] }
-                ]
-            },
-            // ROUND 2
-            {
-                questions: [
-                    { text: [{s:"Honey never spoils.", r:2, isH:false}, {s:"Archaeologists have found edible honey in ancient tombs.", r:10, isH:false}, {s:"Bees make honey by dancing to disco music.", r:94, isH:true}, {s:"It is naturally acidic and low in moisture.", r:5, isH:false}] },
-                    { text: [{s:"Mount Everest is the highest mountain above sea level.", r:4, isH:false}, {s:"It is located in the Himalayas.", r:6, isH:false}, {s:"The mountain is actually made of frozen mashed potatoes.", r:99, isH:true}, {s:"The summit reaches 29,032 feet.", r:3, isH:false}] },
-                    { text: [{s:"The human heart pumps blood throughout the body.", r:1, isH:false}, {s:"It beats approximately 100,000 times a day.", r:12, isH:false}, {s:"It is powered by three AAA batteries in the left valve.", r:98, isH:true}, {s:"The heart is roughly the size of a fist.", r:4, isH:false}] },
-                    { text: [{s:"Coffee is one of the most popular drinks globally.", r:3, isH:false}, {s:"The beans are actually seeds of a fruit.", r:15, isH:false}, {s:"Drinking coffee allows you to see through solid walls.", r:97, isH:true}, {s:"Caffeine is the primary stimulant in coffee.", r:2, isH:false}] },
-                    { text: [{s:"The Internet connects billions of devices.", r:2, isH:false}, {s:"It uses protocols like TCP/IP.", r:8, isH:false}, {s:"The entire web is stored on a single USB stick in Ohio.", r:99, isH:true}, {s:"The World Wide Web was invented by Tim Berners-Lee.", r:4, isH:false}] }
-                ]
-            },
-            // ROUND 3
-            {
-                questions: [
-                    { text: [{s:"Penguins are flightless birds.", r:4, isH:false}, {s:"They live almost exclusively in the Southern Hemisphere.", r:6, isH:false}, {s:"Penguins use jetpacks to migrate between icebergs.", r:98, isH:true}, {s:"They are excellent swimmers.", r:2, isH:false}] },
-                    { text: [{s:"The Mona Lisa was painted by Leonardo da Vinci.", r:1, isH:false}, {s:"It is currently on display at the Louvre.", r:5, isH:false}, {s:"The woman in the painting is actually holding an iPhone.", r:99, isH:true}, {s:"The painting is famous for its enigmatic expression.", r:3, isH:false}] },
-                    { text: [{s:"Electric cars use batteries for power.", r:3, isH:false}, {s:"They produce zero tailpipe emissions.", r:10, isH:false}, {s:"Most Teslas run on recycled dragon scales.", r:97, isH:true}, {s:"Regenerative braking helps extend their range.", r:6, isH:false}] },
-                    { text: [{s:"Bones provide structure to the human body.", r:4, isH:false}, {s:"The adult body has 206 bones.", r:12, isH:false}, {s:"Bones are primarily made of hardened marshmallow fluff.", r:99, isH:true}, {s:"The femur is the longest bone.", r:2, isH:false}] },
-                    { text: [{s:"The Amazon Rainforest is the largest of its kind.", r:5, isH:false}, {s:"It produces a significant portion of the world's oxygen.", r:10, isH:false}, {s:"The trees in the Amazon are actually giant holographic projections.", r:98, isH:true}, {s:"It is home to millions of species.", r:4, isH:false}] }
-                ]
-            }
-        ];
+        function generateDynamicRounds(questionsPerRound = 3) {
+    // 1. Create a shallow copy and shuffle the master DATASET from dataset.js
+    const shuffled = [...DATASET].sort(() => 0.5 - Math.random());
+    
+    const rounds = [];
+    for (let i = 0; i < 3; i++) { // For 3 rounds
+        // 2. Extract a slice of questions for this round
+        const roundQuestions = shuffled.slice(i * questionsPerRound, (i + 1) * questionsPerRound);
+        
+        rounds.push({
+            roundTitle: `ROUND ${i + 1}`,
+            questions: roundQuestions
+        });
+    }
+    return rounds;
+}
+        const GAME_DATA = generateDynamicRounds(3); // 3 questions per round
 
         let currentRoundIndex = 0;
         let currentQuestionIndex = 0;
@@ -325,7 +311,7 @@
             currentRoundIndex = index;
             currentQuestionIndex = 0;
             roundStats = { score: 0, attempts: 0, correct: 0 };
-            boosters = { scanner: 1, fact: 1, freeze: 1 }; // Reset boosters per round
+            boosters = { scanner: 1, fact: 1, freeze: 1 }; 
             updateBoosterUI();
             
             document.getElementById('round-selection').classList.add('hidden');
@@ -335,24 +321,33 @@
             loadQuestion();
         }
 
+        // --- UPDATED RENDER FUNCTION ---
         function loadQuestion() {
             selectedIndex = null;
             document.getElementById('lock-btn').disabled = true;
-            document.getElementById('content-area').classList.remove('active-scan');
             
             const q = GAME_DATA[currentRoundIndex].questions[currentQuestionIndex];
-            const area = document.getElementById('content-area');
-            area.innerHTML = '';
             
-            q.text.forEach((item, idx) => {
-                const span = document.createElement('span');
-                span.className = 'sentence-item';
-                span.innerHTML = `<span class="risk-badge">[SCAN: ${item.r}%]</span>${item.s} `;
-                span.onclick = () => selectSentence(idx);
-                area.appendChild(span);
+            // 1. Display the Paragraph
+            const area = document.getElementById('content-area');
+            area.innerHTML = `<div class="p-6 border-2 border-white/20 bg-white/5 mb-6 arcade-font text-sm leading-relaxed">${q.paragraph}</div>`;
+            
+            // 2. Display the Options from dataset.js as clickable buttons
+            const optionsContainer = document.createElement('div');
+            optionsContainer.className = "grid grid-cols-1 gap-3";
+            
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'sentence-item w-full text-left p-4 border-2 border-white/20 hover:border-cyan-400 transition-all';
+                btn.innerHTML = `<span class="risk-badge">[ANALYZING...]</span> ${opt}`;
+                btn.onclick = () => selectSentence(idx);
+                optionsContainer.appendChild(btn);
             });
+            
+            area.appendChild(optionsContainer);
 
-            document.getElementById('q-number').innerText = `${currentQuestionIndex + 1}/5`;
+            // 3. Update UI Labels
+            document.getElementById('q-number').innerText = `${currentQuestionIndex + 1}/${GAME_DATA[currentRoundIndex].questions.length}`;
             document.getElementById('round-info').innerText = `ROUND ${currentRoundIndex + 1} OF 3`;
             updateHUD();
         }
@@ -365,8 +360,10 @@
             document.getElementById('lock-btn').disabled = false;
         }
 
+        // --- UPDATED CHECK ANSWER FUNCTION ---
         function lockAnswer() {
-            const correct = GAME_DATA[currentRoundIndex].questions[currentQuestionIndex].text[selectedIndex].isH;
+            const currentQ = GAME_DATA[currentRoundIndex].questions[currentQuestionIndex];
+            const isCorrect = selectedIndex === currentQ.correctIndex; // Compare index to dataset.js
             
             globalStats.totalAttempts++;
             roundStats.attempts++;
@@ -375,18 +372,18 @@
             const text = document.getElementById('feedback-text');
             pop.classList.remove('hidden');
 
-            if(correct) {
+            if(isCorrect) {
                 globalStats.score += 10;
                 globalStats.streak++;
                 globalStats.detected++;
                 globalStats.totalCorrect++;
                 roundStats.score += 10;
                 roundStats.correct++;
-                text.innerText = "CORRECT";
+                text.innerText = "ACCURATE";
                 text.style.color = "var(--green)";
             } else {
                 globalStats.streak = 0;
-                text.innerText = "INCORRECT";
+                text.innerText = "GLITCHED";
                 text.style.color = "var(--magenta)";
                 document.getElementById('game-card').classList.add('shake');
                 setTimeout(() => document.getElementById('game-card').classList.remove('shake'), 500);
@@ -397,14 +394,16 @@
             setTimeout(() => {
                 pop.classList.add('hidden');
                 currentQuestionIndex++;
-                if(currentQuestionIndex < 5) {
+                // Check if we have more questions in the round
+                if(currentQuestionIndex < GAME_DATA[currentRoundIndex].questions.length) {
                     loadQuestion();
                 } else {
                     showSummary();
                 }
-            }, 1000);
+            }, 1200);
         }
 
+        // Rest of your helper functions (HUD, Boosters, Summary) remain the same
         function updateHUD() {
             document.getElementById('score').innerText = globalStats.score;
             document.getElementById('streak').innerText = globalStats.streak;
@@ -416,10 +415,8 @@
         function updateBoosterUI() {
             document.getElementById('boost-scanner').disabled = boosters.scanner <= 0;
             document.getElementById('boost-scanner').querySelector('span:last-child').innerText = `${boosters.scanner} LEFT`;
-            
             document.getElementById('boost-fact').disabled = boosters.fact <= 0;
             document.getElementById('boost-fact').querySelector('span:last-child').innerText = `${boosters.fact} LEFT`;
-
             document.getElementById('boost-freeze').disabled = boosters.freeze <= 0;
             document.getElementById('boost-freeze').querySelector('span:last-child').innerText = `${boosters.freeze} LEFT`;
         }
@@ -435,12 +432,11 @@
         function useFactAmplifier() {
             if(boosters.fact > 0) {
                 boosters.fact--;
-                const sentences = GAME_DATA[currentRoundIndex].questions[currentQuestionIndex].text;
-                let highest = 0, targetIdx = 0;
-                sentences.forEach((s, i) => { if(s.r > highest) { highest = s.r; targetIdx = i; } });
-                const el = document.querySelectorAll('.sentence-item')[targetIdx];
-                el.style.backgroundColor = "rgba(255, 0, 255, 0.3)";
-                el.style.border = "3px dashed var(--magenta)";
+                // Highlight the correct answer button
+                const buttons = document.querySelectorAll('.sentence-item');
+                const correctIdx = GAME_DATA[currentRoundIndex].questions[currentQuestionIndex].correctIndex;
+                buttons[correctIdx].style.borderColor = "var(--green)";
+                buttons[correctIdx].style.boxShadow = "0 0 20px var(--green)";
                 updateBoosterUI();
             }
         }
@@ -457,7 +453,6 @@
         function showSummary() {
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('summary-screen').classList.remove('hidden');
-            
             document.getElementById('round-score').innerText = roundStats.score;
             const acc = Math.round((roundStats.correct / roundStats.attempts) * 100) || 0;
             document.getElementById('round-acc').innerText = `${acc}%`;

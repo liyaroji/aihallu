@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI SPOTTER // LVL 3: HARDCORE</title>
+    <script src="dataset.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -254,146 +255,42 @@
     </div>
 
     <script>
-        // DATA STRUCTURE
-        const GAME_DATA = [
-            { // Round 1: Geopolitics
-                name: "GEOPOLITICS",
-                questions: [
-                    {
-                        parts: [
-                            { s: "The Treaty of Westphalia in 1648 established the modern concept of state sovereignty.", r: 4, h: false },
-                            { s: "It effectively ended the Thirty Years' War and the Eighty Years' War in Europe.", r: 12, h: false },
-                            { s: "The treaty was signed in the secret underwater vaults of the Vatican City.", r: 98, h: true },
-                            { s: "Scholars view it as the foundational moment of international relations theory.", r: 7, h: false }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "The South China Sea is a critical maritime gateway for global trade routes.", r: 5, h: false },
-                            { s: "Several nations claim overlapping territorial waters based on the UNCLOS framework.", r: 14, h: false },
-                            { s: "An artificial island made of recycled plastic bottles was declared a sovereign kingdom in 2021.", r: 95, h: true },
-                            { s: "Freedom of navigation operations are frequently conducted to maintain open access.", r: 9, h: false }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "The Arctic Council promotes cooperation among the eight Arctic states on environmental issues.", r: 3, h: false },
-                            { s: "Russia, Canada, and the United States are among the primary members with voting power.", r: 8, h: false },
-                            { s: "The council recently approved a plan to melt the permafrost to find lost viking gold.", r: 99, h: true },
-                            { s: "Climate change is accelerating the accessibility of northern sea routes.", r: 11, h: false }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "Soft power is a term coined by Joseph Nye to describe influence through culture and values.", r: 6, h: false },
-                            { s: "It contrasts with 'hard power', which relies on military force or economic coercion.", r: 4, h: false },
-                            { s: "The Global Soft Power Index ranks nations based on their annual pizza exports.", r: 92, h: true },
-                            { s: "Education and diplomacy are considered core pillars of a nation's soft power.", r: 13, h: false }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "The African Union was established to accelerate the integration of the continent.", r: 2, h: false },
-                            { s: "It succeeded the Organization of African Unity and is headquartered in Addis Ababa.", r: 15, h: false },
-                            { s: "The AU recently launched a space station powered by kinetic energy from marathon runners.", r: 97, h: true },
-                            { s: "The Agenda 2063 framework outlines the strategic plan for Africa's transformation.", r: 10, h: false }
-                        ]
-                    }
-                ]
-            },
-            { // Round 2: Quantum Physics
-                name: "QUANTUM PHYSICS",
-                questions: [
-                    {
-                        parts: [
-                            { s: "Quantum entanglement involves pairs of particles that share identical quantum states.", r: 5, h: false },
-                            { s: "Measurements on one particle instantly affect the state of the other across any distance.", r: 18, h: false },
-                            { s: "Einstein referred to this phenomenon as 'Spooky Action at a Distance'.", r: 4, h: false },
-                            { s: "The speed of entanglement transfer was measured to be exactly 4,000 times faster than a caffeinated cheetah.", r: 96, h: true }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "The Heisenberg Uncertainty Principle states that position and momentum cannot both be known precisely.", r: 6, h: false },
-                            { s: "This is a fundamental limit of nature, not a flaw in measurement technology.", r: 11, h: false },
-                            { s: "Observation of a quantum system inevitably causes the wave function to collapse.", r: 9, h: false },
-                            { s: "The principle was discovered after Werner Heisenberg lost his car keys in a dark alley.", r: 94, h: true }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "Superposition allows a particle to exist in multiple potential states simultaneously.", r: 10, h: false },
-                            { s: "Schrödinger's Cat is a thought experiment illustrating the paradox of quantum states.", r: 3, h: false },
-                            { s: "Quantum computers use qubits to perform calculations much faster than classical bits.", r: 14, h: false },
-                            { s: "Modern qubits are stabilized using a coating of liquid nitrogen and organic honey.", r: 98, h: true }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "The Standard Model of particle physics describes three of the four fundamental forces.", r: 5, h: false },
-                            { s: "The Higgs Boson provides mass to other elementary particles via the Higgs field.", r: 12, h: false },
-                            { s: "Quarks are the fundamental constituents of protons and neutrons.", r: 8, h: false },
-                            { s: "The 'Flavor' of a quark is determined by the specific type of music it emits.", r: 99, h: true }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "Quantum tunneling allows particles to pass through barriers that seem impenetrable.", r: 7, h: false },
-                            { s: "This process is vital for the nuclear fusion that powers stars like our Sun.", r: 13, h: false },
-                            { s: "Tunneling occurs because the wave function of a particle has a non-zero tail.", r: 9, h: false },
-                            { s: "Scientists have built a 'Human Tunneler' that allows people to walk through bank vaults.", r: 93, h: true }
-                        ]
-                    }
-                ]
-            },
-            { // Round 3: Law
-                name: "ADVANCED LAW",
-                questions: [
-                    {
-                        parts: [
-                            { s: "Stare decisis is the legal principle of determining points in litigation according to precedent.", r: 5, h: false },
-                            { s: "It ensures that similar cases are decided consistently over time to provide stability.", r: 14, h: false },
-                            { s: "The Supreme Court is required by law to flip a coin if a decision is tied 4-4.", r: 99, h: true },
-                            { s: "Higher courts set binding precedents that lower courts must follow.", r: 8, h: false }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "Habeas corpus is a recourse in law through which a person can report unlawful detention.", r: 4, h: false },
-                            { s: "It is often referred to as the 'Great Writ' of liberty in common law traditions.", r: 9, h: false },
-                            { s: "The writ was famously used by King Henry VIII to imprison his own shadow.", r: 97, h: true },
-                            { s: "The court demands that the custodian bring the prisoner before the bench.", r: 12, h: false }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "The Commerce Clause grants Congress the power to regulate trade among several states.", r: 6, h: false },
-                            { s: "It has been interpreted broadly to cover many aspects of modern economic life.", r: 15, h: false },
-                            { s: "Gibbons v. Ogden was a landmark case defining the scope of this congressional power.", r: 11, h: false },
-                            { s: "The clause was originally written to protect the interstate trade of magic beans.", r: 92, h: true }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "A tort is a civil wrong that causes a claimant to suffer loss or harm.", r: 3, h: false },
-                            { s: "Negligence occurs when a party fails to exercise reasonable care toward others.", r: 10, h: false },
-                            { s: "Strict liability applies in cases involving inherently dangerous activities.", r: 8, h: false },
-                            { s: "In Australia, it is a tort to accidentally step on a ghost in a public library.", r: 98, h: true }
-                        ]
-                    },
-                    {
-                        parts: [
-                            { s: "International law is primarily governed by treaties, customs, and general principles.", r: 5, h: false },
-                            { s: "The International Court of Justice is the principal judicial organ of the UN.", r: 13, h: false },
-                            { s: "The Rome Statute established the International Criminal Court in 2002.", r: 9, h: false },
-                            { s: "Global laws are enforced by a secret tribunal of 12 immortal owls in Switzerland.", r: 96, h: true }
-                        ]
-                    }
-                ]
+        // 1. DATA ADAPTER: Formats raw dataset.js for Hardcore Mode
+        function generateDynamicRounds(questionsPerRound = 5) {
+            // Shuffle the master DATASET
+            const shuffled = [...DATASET].sort(() => 0.5 - Math.random());
+            
+            const rounds = [];
+            for (let i = 0; i < 3; i++) { 
+                const roundQuestions = shuffled.slice(i * questionsPerRound, (i + 1) * questionsPerRound)
+                    .map(q => {
+                        // Split paragraph into sentences
+                        const sentences = q.paragraph.match(/[^.!?]+[.!?]+/g) || [q.paragraph];
+                        
+                        return {
+                            // Hardcore uses 'parts' instead of 'text' in its loadQuestion logic
+                            parts: sentences.map((s, index) => {
+                                const isHallucination = index === q.correctIndex;
+                                return {
+                                    s: s.trim(),
+                                    h: isHallucination,
+                                    // Hardcore risk levels are more deceptive (higher overall)
+                                    r: isHallucination ? Math.floor(Math.random() * 20) + 75 : Math.floor(Math.random() * 40) + 10
+                                };
+                            })
+                        };
+                    });
+                
+                rounds.push({
+                    roundTitle: `ROUND ${i + 1}`,
+                    questions: roundQuestions
+                });
             }
-        ];
+            return rounds;
+        }
 
-        // GAME STATE
+        // 2. INITIALIZE GAME STATE
+        const GAME_DATA = generateDynamicRounds(5); 
         let currentRoundIdx = 0;
         let currentQIdx = 0;
         let selectedIdx = null;
@@ -405,6 +302,7 @@
         let roundHits = 0;
         let boosters = { scan: 1, amp: 1, freeze: 1 };
 
+        // 3. NAVIGATION & UI
         function showMenu() {
             document.getElementById('view-start').classList.add('hidden');
             document.getElementById('view-summary').classList.add('hidden');
@@ -432,14 +330,14 @@
             document.getElementById('btn-lock').disabled = true;
             document.getElementById('content-box').classList.remove('scanner-active');
             
-            const round = GAME_DATA[currentRoundIdx];
-            const q = round.questions[currentQIdx];
+            const q = GAME_DATA[currentRoundIdx].questions[currentQIdx];
             const box = document.getElementById('content-box');
             box.innerHTML = '';
             
             q.parts.forEach((item, i) => {
                 const span = document.createElement('span');
                 span.className = 'sentence-node';
+                // risk-pill is hidden until Scanner booster is used
                 span.innerHTML = `<span class="risk-pill">RISK: ${item.r}%</span>${item.s}`;
                 span.onclick = () => selectSentence(i);
                 box.appendChild(span);
@@ -458,6 +356,7 @@
             document.getElementById('btn-lock').disabled = false;
         }
 
+        // 4. CORE LOGIC
         function submitChoice() {
             const q = GAME_DATA[currentRoundIdx].questions[currentQIdx];
             const isCorrect = q.parts[selectedIdx].h;
@@ -468,22 +367,23 @@
             
             flash.classList.remove('hidden');
             if (isCorrect) {
-                score += 15;
-                roundScore += 15;
+                score += 25; // Hardcore mode gives more points
+                roundScore += 25;
                 streak++;
                 totalHits++;
                 roundHits++;
-                txt.innerText = "CORRECT";
+                txt.innerText = "THREAT NEUTRALIZED";
                 txt.style.color = "var(--green)";
             } else {
                 streak = 0;
-                txt.innerText = "INCORRECT";
+                txt.innerText = "SYSTEM BREACHED";
                 txt.style.color = "var(--magenta)";
+                // Intense shake effect for hardcore failures
                 document.getElementById('game-card').animate([
-                    { transform: 'translateX(-15px) rotate(2deg)' },
-                    { transform: 'translateX(15px) rotate(-2deg)' },
+                    { transform: 'translateX(-20px) rotate(3deg)' },
+                    { transform: 'translateX(20px) rotate(-3deg)' },
                     { transform: 'translateX(0)' }
-                ], { duration: 100, iterations: 3 });
+                ], { duration: 80, iterations: 5 });
             }
 
             updateHUD();
@@ -496,7 +396,7 @@
                 } else {
                     showSummary();
                 }
-            }, 800);
+            }, 1000);
         }
 
         function updateHUD() {
@@ -507,6 +407,7 @@
             document.getElementById('hud-acc').innerText = acc + "%";
         }
 
+        // 5. BOOSTER SYSTEM
         function updateBoosterUI() {
             document.getElementById('count-scan').innerText = `${boosters.scan} LEFT`;
             document.getElementById('count-amp').innerText = `${boosters.amp} LEFT`;
@@ -530,10 +431,11 @@
                 boosters.amp--;
                 const q = GAME_DATA[currentRoundIdx].questions[currentQIdx];
                 let maxIdx = 0;
+                // Find highest risk index
                 q.parts.forEach((p, i) => { if (p.r > q.parts[maxIdx].r) maxIdx = i; });
                 const nodes = document.querySelectorAll('.sentence-node');
                 nodes[maxIdx].style.border = "6px dashed var(--magenta)";
-                nodes[maxIdx].style.boxShadow = "0 0 30px var(--magenta)";
+                nodes[maxIdx].style.boxShadow = "0 0 40px var(--magenta)";
                 updateBoosterUI();
             }
         }
@@ -541,7 +443,8 @@
         function boostFreeze() {
             if (boosters.freeze > 0) {
                 boosters.freeze--;
-                document.body.style.filter = "hue-rotate(180deg) contrast(1.5)";
+                // Matrix-style visual freeze
+                document.body.style.filter = "hue-rotate(180deg) contrast(1.5) brightness(1.2)";
                 setTimeout(() => { document.body.style.filter = ""; }, 3000);
                 updateBoosterUI();
             }
