@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>What is AI Hallucination? — NeuralGlitch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --black: #000508;
+      --deep: #010D1A;
+      --neon-cyan: #00FFE7;
+      --neon-pink: #FF006E;
+      --neon-green: #39FF14;
+      --neon-blue: #0080FF;
+      --neon-yellow: #FFE600;
+      --neon-orange: #FF6B00;
+      --text-dim: #4A7A8A;
+      --text-mid: #7ABFCF;
+      --text-bright: #C8F0F8;
+      --font-display: 'Orbitron', monospace;
+      --font-body: 'Rajdhani', sans-serif;
+      --font-mono: 'Share Tech Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--black);
+      color: var(--text-bright);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Scanlines */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,231,0.02) 2px, rgba(0,255,231,0.02) 4px);
+      pointer-events: none;
+      z-index: 9000;
+      animation: scanMove 10s linear infinite;
+    }
+    @keyframes scanMove { from{background-position:0 0} to{background-position:0 80px} }
+
+    /* Cursor */
+    .cursor { position:fixed; width:12px; height:12px; background:var(--neon-pink); pointer-events:none; z-index:99999; transform:translate(-50%,-50%); clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%); transition:width .15s,height .15s; }
+    .cursor-ring { position:fixed; width:36px; height:36px; border:1px solid var(--neon-pink); pointer-events:none; z-index:99998; transform:translate(-50%,-50%); opacity:0.5; clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%); transition:all .08s ease; }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      border-bottom: 1px solid rgba(0,255,231,0.08);
+      background: rgba(0, 5, 8, 0.9);
+      backdrop-filter: blur(20px);
+    }
+    .nav-logo { font-family: var(--font-display); font-size: 0.75rem; letter-spacing: 0.25em; color: var(--neon-cyan); text-shadow: 0 0 20px var(--neon-cyan); }
+    .nav-logo span { color: var(--neon-pink); }
+    .nav-links { display:flex; gap:36px; list-style:none; }
+    .nav-links a { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-dim); text-decoration:none; letter-spacing:0.15em; text-transform:uppercase; transition:color .2s,text-shadow .2s; }
+    .nav-links a:hover,.nav-links a.active { color:var(--neon-cyan); text-shadow:0 0 12px var(--neon-cyan); }
+    .nav-cta { font-family:var(--font-mono); font-size:0.7rem; color:var(--black); background:var(--neon-cyan); border:none; padding:8px 20px; letter-spacing:0.12em; text-transform:uppercase; cursor:none; clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%); transition:background .2s,box-shadow .2s; text-decoration:none; }
+    .nav-cta:hover { background:var(--neon-pink); box-shadow:0 0 24px var(--neon-pink); }
+
+    /* HERO */
+    .about-hero {
+      min-height: 70vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 48px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .about-hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 60%, rgba(255,0,110,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 20% 20%, rgba(0,128,255,0.08) 0%, transparent 60%);
+    }
+
+    /* Glitch title treatment */
+    .about-tag {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--neon-pink);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: slideIn 0.5s 0.3s forwards;
+    }
+    .about-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 6vw, 5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      line-height: 1.05;
+      opacity: 0;
+      animation: slideIn 0.6s 0.5s forwards;
+    }
+    .about-title .line1 { color: var(--text-bright); display: block; }
+    .about-title .line2 { color: var(--neon-pink); display: block; text-shadow: 0 0 40px rgba(255,0,110,0.5); }
+    .about-title .line3 { color: var(--neon-cyan); display: block; font-size: 0.4em; letter-spacing: 0.25em; margin-top: 12px; font-weight: 400; text-shadow: none; }
+
+    .about-desc {
+      font-family: var(--font-mono);
+      font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+      color: var(--text-mid);
+      max-width: 600px;
+      line-height: 1.9;
+      margin-top: 32px;
+      opacity: 0;
+      animation: slideIn 0.6s 0.8s forwards;
+    }
+
+    @keyframes slideIn {
+      from { opacity:0; transform:translateY(24px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* DEFINITION SECTION */
+    .definition-section {
+      padding: 100px 48px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .def-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: start;
+    }
+    .def-left { }
+    .section-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--neon-cyan);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-eyebrow::before { content: '//'; color: var(--text-dim); }
+    .def-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      font-weight: 700;
+      text-transform: uppercase;
+      line-height: 1.2;
+      margin-bottom: 28px;
+    }
+    .def-title span { color: var(--neon-pink); }
+    .def-text {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      line-height: 2;
+      margin-bottom: 16px;
+    }
+    .def-text strong { color: var(--neon-cyan); font-weight: 400; }
+    .def-quote {
+      margin-top: 36px;
+      padding: 24px 28px;
+      border-left: 3px solid var(--neon-pink);
+      background: rgba(255,0,110,0.04);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-mid);
+      line-height: 1.8;
+      font-style: italic;
+    }
+    .def-quote cite {
+      display: block;
+      margin-top: 12px;
+      font-style: normal;
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* AI Brain visual */
+    .brain-terminal {
+      background: #010810;
+      border: 1px solid rgba(0,255,231,0.12);
+      padding: 32px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .brain-terminal::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
+    }
+    .term-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(0,255,231,0.06);
+    }
+    .term-dot { width:8px; height:8px; border-radius:50%; }
+    .term-title { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase; margin-left: auto; }
+
+    .term-line { margin-bottom: 10px; line-height: 1.6; }
+    .term-prompt { color: var(--neon-green); }
+    .term-cmd { color: var(--neon-cyan); }
+    .term-output { color: var(--text-dim); padding-left: 14px; }
+    .term-error { color: var(--neon-pink); padding-left: 14px; }
+    .term-warn { color: var(--neon-yellow); padding-left: 14px; }
+    .term-cursor { display:inline-block; width:8px; height:14px; background:var(--neon-cyan); animation:blink 1s infinite; vertical-align:middle; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* IMPACT SECTION */
+    .impact-section {
+      padding: 100px 48px;
+      background: linear-gradient(180deg, transparent, rgba(255,0,110,0.03), transparent);
+    }
+    .impact-inner { max-width: 1100px; margin: 0 auto; }
+    .impact-header { text-align: center; margin-bottom: 80px; }
+    .impact-header h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 3vw, 2.8rem);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 16px;
+    }
+    .impact-header h2 span { color: var(--neon-pink); }
+
+    .impact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: rgba(255,0,110,0.05);
+    }
+    .impact-card {
+      background: var(--black);
+      padding: 48px 32px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+    }
+    .impact-card:hover { background: #020C16; }
+    .impact-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--card-color, var(--neon-pink));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s;
+    }
+    .impact-card:hover::after { transform: scaleX(1); }
+    .impact-emoji { font-size: 2.5rem; display:block; margin-bottom: 20px; }
+    .impact-category {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--card-color, var(--neon-pink));
+      margin-bottom: 12px;
+    }
+    .impact-title {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-bright);
+      margin-bottom: 16px;
+    }
+    .impact-text {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      line-height: 1.8;
+    }
+    .impact-example {
+      margin-top: 20px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.02);
+      border-left: 2px solid var(--card-color, var(--neon-pink));
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-mid);
+      line-height: 1.7;
+      font-style: italic;
+    }
+
+    /* TYPES OF HALLUCINATIONS */
+    .types-section {
+      padding: 100px 48px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .types-header { margin-bottom: 64px; }
+    .types-header h2 { font-family:var(--font-display); font-size:clamp(1.6rem,3vw,2.8rem); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-top:16px; }
+    .types-header h2 span { color: var(--neon-cyan); }
+
+    .type-list { display:flex; flex-direction:column; gap:2px; }
+    .type-item {
+      display: grid;
+      grid-template-columns: 80px 1fr auto;
+      align-items: center;
+      gap: 32px;
+      padding: 28px 32px;
+      background: #010810;
+      border: 1px solid transparent;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .type-item:hover {
+      border-color: rgba(0,255,231,0.12);
+      background: #010D1E;
+    }
+    .type-item:hover .type-num { color: var(--neon-cyan); text-shadow: 0 0 20px var(--neon-cyan); }
+    .type-num {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 900;
+      color: rgba(0,255,231,0.15);
+      transition: all 0.3s;
+      line-height: 1;
+    }
+    .type-content { }
+    .type-name {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+      color: var(--text-bright);
+    }
+    .type-desc {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+    .type-badge {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+
+    /* REAL WORLD CONSEQUENCES */
+    .consequences {
+      padding: 100px 48px;
+      background: linear-gradient(180deg, transparent, rgba(0,10,20,0.5), transparent);
+    }
+    .cons-inner { max-width: 900px; margin: 0 auto; }
+    .cons-header { text-align: center; margin-bottom: 64px; }
+    .cons-header h2 { font-family:var(--font-display); font-size:clamp(1.6rem,3vw,2.6rem); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-top:16px; }
+    .cons-header h2 span { color: var(--neon-yellow); }
+
+    .timeline { position: relative; padding-left: 48px; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 12px; top: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(180deg, var(--neon-cyan), var(--neon-pink), var(--neon-yellow));
+      opacity: 0.3;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 48px;
+      padding-bottom: 48px;
+      border-bottom: 1px solid rgba(0,255,231,0.04);
+    }
+    .timeline-item:last-child { border-bottom: none; margin-bottom: 0; }
+    .timeline-dot {
+      position: absolute;
+      left: -42px; top: 4px;
+      width: 14px; height: 14px;
+      background: var(--item-color, var(--neon-cyan));
+      clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+      box-shadow: 0 0 16px var(--item-color, var(--neon-cyan));
+    }
+    .timeline-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--item-color, var(--neon-cyan));
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .timeline-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+    }
+    .timeline-text {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.85;
+    }
+    .timeline-text strong { color: var(--text-mid); }
+
+    /* CALL TO ACTION */
+    .about-cta {
+      padding: 120px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .about-cta::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(255,0,110,0.06) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .cta-eyebrow { font-family:var(--font-mono); font-size:0.65rem; color:var(--neon-pink); letter-spacing:0.3em; text-transform:uppercase; margin-bottom:24px; }
+    .cta-big {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 4.5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 1.05;
+      margin-bottom: 28px;
+    }
+    .cta-big span { color: var(--neon-cyan); text-shadow: 0 0 40px var(--neon-cyan); }
+    .cta-body {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      max-width: 520px;
+      margin: 0 auto 48px;
+      line-height: 1.9;
+    }
+    .btn-primary {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--black);
+      background: var(--neon-cyan);
+      border: none;
+      padding: 18px 48px;
+      cursor: none;
+      text-decoration: none;
+      position: relative;
+      clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+      transition: all 0.2s;
+      display: inline-block;
+    }
+    .btn-primary:hover { background: var(--neon-pink); box-shadow: 0 0 40px var(--neon-pink), 0 0 80px rgba(255,0,110,0.3); color: white; }
+
+    /* FOOTER */
+    footer { border-top:1px solid rgba(0,255,231,0.06); padding:48px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:24px; }
+    .footer-logo { font-family:var(--font-display); font-size:0.8rem; letter-spacing:0.2em; color:var(--neon-cyan); text-shadow:0 0 20px var(--neon-cyan); }
+    .footer-copy { font-family:var(--font-mono); font-size:0.62rem; color:var(--text-dim); letter-spacing:0.1em; }
+    .footer-nav { display:flex; gap:28px; list-style:none; }
+    .footer-nav a { font-family:var(--font-mono); font-size:0.65rem; color:var(--text-dim); text-decoration:none; letter-spacing:0.1em; text-transform:uppercase; transition:color .2s; }
+    .footer-nav a:hover { color:var(--neon-cyan); }
+
+    /* Scroll reveal */
+    .reveal { opacity:0; transform:translateY(30px); transition:opacity 0.7s ease,transform 0.7s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    @media (max-width: 768px) {
+      nav { padding:16px 20px; }
+      .nav-links { display:none; }
+      .about-hero { padding:100px 20px 60px; }
+      .definition-section { padding:60px 20px; }
+      .def-grid { grid-template-columns:1fr; gap:40px; }
+      .impact-section { padding:60px 20px; }
+      .impact-grid { grid-template-columns:1fr; }
+      .types-section { padding:60px 20px; }
+      .type-item { grid-template-columns:60px 1fr; }
+      .type-badge { display:none; }
+      .consequences { padding:60px 20px; }
+      .about-cta { padding:80px 20px; }
+      footer { padding:32px 20px; flex-direction:column; text-align:center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <nav>
+    <div class="nav-logo">NEURAL<span>GLITCH</span></div>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html" class="active">About</a></li>
+      <li><a href="#">Game</a></li>
+      <li><a href="#">Leaderboard</a></li>
+    </ul>
+    <a href="index.html#game" class="nav-cta">Play Now</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="about-hero">
+    <div class="about-hero-bg"></div>
+    <div class="about-tag">// Threat Intelligence Report</div>
+    <h1 class="about-title">
+      <span class="line1">What is</span>
+      <span class="line2">AI Hallucination?</span>
+      <span class="line3">and why it affects you more than you think</span>
+    </h1>
+    <p class="about-desc">
+      AI systems are generating billions of pieces of text daily. A hidden percentage of that text contains confident-sounding falsehoods. This is not a bug to be fixed — it's a fundamental characteristic of how language models work. And most people can't tell the difference.
+    </p>
+  </section>
+
+  <!-- DEFINITION SECTION -->
+  <section class="definition-section">
+    <div class="def-grid">
+      <div class="def-left reveal">
+        <div class="section-eyebrow">Definition</div>
+        <h2 class="def-title">The AI Makes <span>Things Up</span> — And It Sounds Convincing</h2>
+        <p class="def-text">
+          An <strong>AI hallucination</strong> occurs when a large language model generates text that is factually incorrect, misleading, or entirely fabricated — yet delivered with the same fluency and confidence as accurate information.
+        </p>
+        <p class="def-text">
+          The term "hallucination" is borrowed from psychology. Just as a hallucinating person perceives something that isn't real, an AI hallucinates when it generates content that doesn't correspond to reality — but internally, the model has no mechanism to "know" it's wrong.
+        </p>
+        <p class="def-text">
+          This happens because language models are trained to predict the most statistically probable next word, not to verify truth. They don't "look up" facts — they generate text that <strong>sounds like</strong> how facts are expressed.
+        </p>
+        <div class="def-quote">
+          "The model doesn't know what it doesn't know. It generates plausible text — and plausible is not the same as true."
+          <cite>— AI Safety Researcher</cite>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <div class="brain-terminal">
+          <div class="term-header">
+            <div class="term-dot" style="background:#FF006E"></div>
+            <div class="term-dot" style="background:#FFE600"></div>
+            <div class="term-dot" style="background:#39FF14"></div>
+            <div class="term-title">neural_process.log</div>
+          </div>
+
+          <div class="term-line"><span class="term-prompt">$</span> <span class="term-cmd">ai.generate("When was the Eiffel Tower built?")</span></div>
+          <div class="term-line"><span class="term-output">Processing query...</span></div>
+          <div class="term-line"><span class="term-output">Searching training data patterns...</span></div>
+          <div class="term-line"><span class="term-output">Confidence: 97.3%</span></div>
+          <div class="term-line"><span class="term-output" style="color:var(--neon-cyan)">"The Eiffel Tower was built in 1887."</span></div>
+          <div class="term-line"><span class="term-error">⚠ HALLUCINATION DETECTED</span></div>
+          <div class="term-line"><span class="term-error">Actual year: 1889</span></div>
+          <div class="term-line"><span class="term-warn">Model had no verification layer.</span></div>
+          <div class="term-line"><span class="term-warn">Error propagated with full confidence.</span></div>
+          <br/>
+          <div class="term-line"><span class="term-prompt">$</span> <span class="term-cmd">ai.verify(output) </span><span class="term-cursor"></span></div>
+          <div class="term-line"><span class="term-error">ERROR: Verification module not found.</span></div>
+          <div class="term-line"><span class="term-error">Models cannot self-verify. Human required.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IMPACT ON COMMON PEOPLE -->
+  <section class="impact-section">
+    <div class="impact-inner">
+      <div class="impact-header reveal">
+        <div class="section-eyebrow" style="justify-content:center; color:var(--neon-pink)"><span style="color:var(--text-dim)">//</span> Real-World Threat Matrix</div>
+        <h2>How AI Hallucinations <span>Affect You</span></h2>
+      </div>
+
+      <div class="impact-grid">
+
+        <div class="impact-card reveal" style="--card-color: var(--neon-pink)">
+          <span class="impact-emoji">🏥</span>
+          <div class="impact-category">Medical / Health</div>
+          <div class="impact-title">Dangerous Medical Misinformation</div>
+          <p class="impact-text">People increasingly ask AI chatbots about symptoms, medications, and treatment options. AI hallucinations in medical contexts can recommend incorrect dosages, misidentify conditions, or fabricate drug interactions.</p>
+          <div class="impact-example">"Ask AI for home remedy. AI confidently recommends a harmful combination. Patient trusts it. Hospital visit follows."</div>
+        </div>
+
+        <div class="impact-card reveal" style="--card-color: var(--neon-yellow)">
+          <span class="impact-emoji">⚖️</span>
+          <div class="impact-category">Legal & Financial</div>
+          <div class="impact-title">Fabricated Legal Citations</div>
+          <p class="impact-text">Lawyers have filed court documents citing AI-invented cases that never existed. For everyday people, this means getting incorrect legal or financial advice that sounds authoritative — with zero accountability.</p>
+          <div class="impact-example">"A lawyer submitted legal briefs citing six non-existent court cases generated by ChatGPT." — documented real incident, 2023</div>
+        </div>
+
+        <div class="impact-card reveal" style="--card-color: var(--neon-blue)">
+          <span class="impact-emoji">📰</span>
+          <div class="impact-category">Information & News</div>
+          <div class="impact-title">Spreading False Facts</div>
+          <p class="impact-text">AI-written articles, social posts, and summaries now flood the internet. Hallucinated statistics get shared as news. False historical facts get embedded in educational content. Truth becomes harder to locate.</p>
+          <div class="impact-example">"AI-generated news articles containing hallucinated stats were shared 100,000+ times before corrections were issued."</div>
+        </div>
+
+        <div class="impact-card reveal" style="--card-color: var(--neon-green)">
+          <span class="impact-emoji">🎓</span>
+          <div class="impact-category">Education</div>
+          <div class="impact-title">Students Learning False Information</div>
+          <p class="impact-text">Students using AI for research or homework receive confident, well-structured answers that contain invented facts, misattributed quotes, or wrong dates. Academic foundations are built on hallucinated ground.</p>
+          <div class="impact-example">"AI wrote a history essay with three invented primary sources. The student submitted it. The teacher almost believed it."</div>
+        </div>
+
+        <div class="impact-card reveal" style="--card-color: var(--neon-orange)">
+          <span class="impact-emoji">💼</span>
+          <div class="impact-category">Workplace</div>
+          <div class="impact-title">Business Decisions on Bad Data</div>
+          <p class="impact-text">Executives, analysts, and professionals are using AI-generated market research, summaries, and reports without verification. Hallucinated competitor data or market statistics can lead to costly strategic mistakes.</p>
+          <div class="impact-example">"AI-generated product research cited a non-existent study as proof of market demand. $2M product launch failed."</div>
+        </div>
+
+        <div class="impact-card reveal" style="--card-color: var(--neon-cyan)">
+          <span class="impact-emoji">🗳️</span>
+          <div class="impact-category">Civic & Political</div>
+          <div class="impact-title">Eroding Public Trust</div>
+          <p class="impact-text">AI hallucinations create a world where nothing can be easily verified. When citizens can't distinguish AI-hallucinated "facts" from real ones, the foundation of informed democratic participation begins to erode.</p>
+          <div class="impact-example">"AI confidently stated a false election law to a voter seeking information. The voter shared it. It spread as fact."</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- TYPES OF HALLUCINATIONS -->
+  <section class="types-section">
+    <div class="types-header reveal">
+      <div class="section-eyebrow">Hallucination Taxonomy</div>
+      <h2>The <span>Types</span> of AI Errors</h2>
+    </div>
+    <div class="type-list">
+
+      <div class="type-item reveal">
+        <div class="type-num">01</div>
+        <div class="type-content">
+          <div class="type-name">Factual Confabulation</div>
+          <div class="type-desc">The AI invents specific facts — dates, statistics, measurements — that sound precise and credible. "The Great Wall of China is 21,196 kilometers long and was completed in 1644 AD." One detail may be correct; another entirely fabricated.</div>
+        </div>
+        <div class="type-badge" style="color:var(--neon-pink); border-color:var(--neon-pink)">Most Common</div>
+      </div>
+
+      <div class="type-item reveal">
+        <div class="type-num">02</div>
+        <div class="type-content">
+          <div class="type-name">Citation Fabrication</div>
+          <div class="type-desc">The AI invents books, papers, articles, and authors that do not exist — complete with plausible journal names, publication years, and page numbers. These fake sources look real enough to pass casual verification.</div>
+        </div>
+        <div class="type-badge" style="color:var(--neon-yellow); border-color:var(--neon-yellow)">High Risk</div>
+      </div>
+
+      <div class="type-item reveal">
+        <div class="type-num">03</div>
+        <div class="type-content">
+          <div class="type-name">Entity Substitution</div>
+          <div class="type-desc">The AI conflates real entities — replacing one person's achievements with another's, attributing quotes to the wrong figure, or mixing details of two similar events into a single plausible-sounding account.</div>
+        </div>
+        <div class="type-badge" style="color:var(--neon-cyan); border-color:var(--neon-cyan)">Subtle</div>
+      </div>
+
+      <div class="type-item reveal">
+        <div class="type-num">04</div>
+        <div class="type-content">
+          <div class="type-name">Temporal Distortion</div>
+          <div class="type-desc">Events are placed in the wrong time period. Historical timelines are compressed or expanded. Cause and effect relationships are inverted. The narrative sounds chronologically coherent but the dates are wrong.</div>
+        </div>
+        <div class="type-badge" style="color:var(--neon-green); border-color:var(--neon-green)">Tricky</div>
+      </div>
+
+      <div class="type-item reveal">
+        <div class="type-num">05</div>
+        <div class="type-content">
+          <div class="type-name">Confident Extrapolation</div>
+          <div class="type-desc">The AI extends beyond the limits of its knowledge but presents the extrapolated content as established fact. It fills gaps in its training data with statistically plausible but unverified content, with no indication of uncertainty.</div>
+        </div>
+        <div class="type-badge" style="color:var(--neon-orange); border-color:var(--neon-orange)">Dangerous</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- REAL WORLD CONSEQUENCES / TIMELINE -->
+  <section class="consequences">
+    <div class="cons-inner">
+      <div class="cons-header reveal">
+        <div class="section-eyebrow" style="justify-content:center; color:var(--neon-yellow)"><span style="color:var(--text-dim)">//</span> Documented Incidents</div>
+        <h2>Real Consequences in the <span>Real World</span></h2>
+      </div>
+      <div class="timeline">
+
+        <div class="timeline-item reveal" style="--item-color: var(--neon-pink)">
+          <div class="timeline-dot"></div>
+          <div class="timeline-tag">Legal · 2023</div>
+          <div class="timeline-title">The Fictitious Court Cases Scandal</div>
+          <p class="timeline-text">A New York attorney submitted court documents to a federal judge that cited <strong>six completely fabricated legal cases</strong> generated by ChatGPT. The AI had invented case names, courts, docket numbers, and legal outcomes. The attorney had not verified any of them. The judge sanctioned the law firm, and the incident became a landmark moment in AI misuse.</p>
+        </div>
+
+        <div class="timeline-item reveal" style="--item-color: var(--neon-yellow)">
+          <div class="timeline-dot"></div>
+          <div class="timeline-tag">Medical · Ongoing</div>
+          <div class="timeline-title">AI Medical Advice Spreading Unchecked</div>
+          <p class="timeline-text">Studies by medical researchers found that AI chatbots provide <strong>incorrect medical advice in 30-40% of tested queries</strong> — yet present all answers with identical confidence. In contexts involving medication dosages, emergency procedures, and chronic condition management, these errors can cause direct physical harm to people who trust the AI over their doctors.</p>
+        </div>
+
+        <div class="timeline-item reveal" style="--item-color: var(--neon-cyan)">
+          <div class="timeline-dot"></div>
+          <div class="timeline-tag">Journalism · 2023</div>
+          <div class="timeline-title">AI News Articles with Invented Facts</div>
+          <p class="timeline-text">Multiple news outlets experimenting with AI-generated content published articles containing <strong>hallucinated statistics, misattributed quotes, and fabricated historical context</strong>. Some articles were retracted only after readers spotted errors. Others remain online with silent corrections or no corrections at all, continuing to mislead new readers.</p>
+        </div>
+
+        <div class="timeline-item reveal" style="--item-color: var(--neon-green)">
+          <div class="timeline-dot"></div>
+          <div class="timeline-tag">Education · Now</div>
+          <div class="timeline-title">Students Building on False Foundations</div>
+          <p class="timeline-text">As AI tools become standard in academic work, educators are reporting <strong>essays and research papers built on hallucinated sources</strong>. Students who use AI to find evidence for their arguments receive confident-sounding citations to papers that don't exist, scientists who never said those words, and studies that were never conducted. Critical thinking is the only antidote.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="about-cta">
+    <div class="cta-eyebrow">// Your Defense Mechanism</div>
+    <div class="cta-big">Train Your<br/><span>Detector</span></div>
+    <p class="cta-body">
+      The best defense against AI hallucinations is a trained, skeptical human mind. NeuralGlitch gives you real practice identifying the subtle patterns of AI misinformation — before they fool you in the wild.
+    </p>
+    <a href="index.html" class="btn-primary">▶ Start Training Now</a>
+  </section>
+
+  <footer>
+    <div class="footer-logo">NEURAL<span style="color:var(--neon-pink)">GLITCH</span></div>
+    <ul class="footer-nav">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="#">Game</a></li>
+      <li><a href="#">Privacy</a></li>
+    </ul>
+    <div class="footer-copy">© 2025 NeuralGlitch · AI Hallucination Spotter</div>
+  </footer>
+
+  <script>
+    // Cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+    function animCursor(){
+      cursor.style.left=mx+'px';cursor.style.top=my+'px';
+      rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;
+      ring.style.left=rx+'px';ring.style.top=ry+'px';
+      requestAnimationFrame(animCursor);
+    }
+    animCursor();
+    document.querySelectorAll('a,button,.impact-card,.type-item,.timeline-item').forEach(el=>{
+      el.addEventListener('mouseenter',()=>{cursor.style.transform='translate(-50%,-50%) scale(2)';});
+      el.addEventListener('mouseleave',()=>{cursor.style.transform='translate(-50%,-50%) scale(1)';});
+    });
+
+    // Scroll reveal
+    const obs = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});
+    },{threshold:0.08});
+    document.querySelectorAll('.reveal').forEach(r=>obs.observe(r));
+  </script>
+</body>
+</html>

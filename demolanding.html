@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEURO-GLITCH // AI Hallucination Spotter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-purple: #bc13fe;
+            --neon-cyan: #05ffa1;
+            --glitch-red: #ff003c;
+        }
+
+        body {
+            background-color: #050505;
+            color: #e0e0e0;
+            font-family: 'Space Mono', monospace;
+            overflow-x: hidden;
+        }
+
+        .glitch-title {
+            font-family: 'Syncopate', sans-serif;
+            text-transform: uppercase;
+            position: relative;
+            display: inline-block;
+        }
+
+        .glitch-title::before, .glitch-title::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+        }
+
+        .glitch-title::before {
+            left: 2px;
+            text-shadow: -2px 0 var(--neon-cyan);
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+
+        .glitch-title::after {
+            left: -2px;
+            text-shadow: -2px 0 var(--glitch-red);
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(10px, 9999px, 15px, 0); }
+            20% { clip: rect(30px, 9999px, 45px, 0); }
+            40% { clip: rect(60px, 9999px, 10px, 0); }
+            60% { clip: rect(15px, 9999px, 80px, 0); }
+            80% { clip: rect(40px, 9999px, 20px, 0); }
+            100% { clip: rect(90px, 9999px, 5px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(80px, 9999px, 90px, 0); }
+            20% { clip: rect(10px, 9999px, 25px, 0); }
+            40% { clip: rect(40px, 9999px, 60px, 0); }
+            60% { clip: rect(5px, 9999px, 15px, 0); }
+            80% { clip: rect(70px, 9999px, 40px, 0); }
+            100% { clip: rect(30px, 9999px, 85px, 0); }
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .neuro-card {
+            background: rgba(20, 20, 25, 0.8);
+            border: 1px solid rgba(188, 19, 254, 0.3);
+            box-shadow: 0 0 15px rgba(188, 19, 254, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .neuro-card:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(5, 255, 161, 0.2);
+        }
+
+        .btn-glitch {
+            background: transparent;
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 10px 20px;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+        .btn-glitch:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+
+        .hallucination-word {
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 2px;
+            transition: 0.2s;
+        }
+
+        .hallucination-word:hover {
+            background: rgba(188, 19, 254, 0.4);
+        }
+
+        .correct {
+            background: var(--neon-cyan) !important;
+            color: #000 !important;
+        }
+
+        .wrong {
+            background: var(--glitch-red) !important;
+            color: #fff !important;
+        }
+
+        #game-section { display: none; }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+
+    <!-- Navigation -->
+    <nav class="p-6 flex justify-between items-center border-b border-purple-900/30">
+        <div class="text-xl font-bold tracking-tighter text-purple-500">NEURO_SYSTEM.v1</div>
+        <div class="space-x-8 text-sm">
+            <a href="#" onclick="showSection('landing')" class="hover:text-cyan-400">MANIFESTO</a>
+            <a href="#" onclick="showSection('game')" class="hover:text-cyan-400">PLAY_INIT</a>
+        </div>
+    </nav>
+
+    <!-- LANDING PAGE SECTION -->
+    <main id="landing-section" class="max-w-6xl mx-auto px-6 py-16">
+        <div class="text-center mb-20">
+            <h1 class="glitch-title text-5xl md:text-7xl font-bold mb-4" data-text="HALLUCINATION_SPOTTER">HALLUCINATION_SPOTTER</h1>
+            <p class="text-cyan-400 tracking-widest text-sm md:text-base">NEURAL NETWORK FIDELITY TEST // ERROR IDENTIFICATION</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
+            <div>
+                <h2 class="text-3xl font-bold text-purple-400 mb-6">What is a Neural Hallucination?</h2>
+                <p class="text-gray-400 leading-relaxed mb-4">
+                    Large Language Models (LLMs) are statistical prediction engines. They don't "know" facts; they predict the next most likely token. When the model drifts from the training data, it creates <span class="text-cyan-300">plausible-sounding lies</span>—we call these Hallucinations.
+                </p>
+                <div class="p-4 border-l-2 border-cyan-500 bg-cyan-950/20 text-sm italic">
+                    "Artificial intelligence is not a reflection of reality, but a high-dimensional mirage of our own data."
+                </div>
+            </div>
+            <div class="neuro-card p-8 rounded-lg relative overflow-hidden">
+                <div class="absolute top-2 right-4 text-[10px] text-purple-600">SYS_LOG: ERR_092</div>
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    Impact on the Common Man
+                </h3>
+                <ul class="space-y-4 text-sm text-gray-300">
+                    <li class="flex gap-3">
+                        <span class="text-cyan-400">[01]</span>
+                        <span><strong>Medical Risk:</strong> AI citing nonexistent drug interactions or misdiagnosing conditions with high confidence.</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="text-cyan-400">[02]</span>
+                        <span><strong>Legal Traps:</strong> Lawyers and citizens using fabricated case laws generated by chatbots, leading to fines and lost cases.</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="text-cyan-400">[03]</span>
+                        <span><strong>Financial Ruin:</strong> Trusting AI "experts" for investment advice based on imaginary market historical data.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button onclick="showSection('game')" class="btn-glitch text-xl px-12 py-4">
+                COMMENCE_TESTING
+            </button>
+        </div>
+    </main>
+
+    <!-- GAME SECTION -->
+    <main id="game-section" class="max-w-4xl mx-auto px-6 py-16">
+        <div class="flex justify-between items-center mb-8 border-b border-cyan-900/50 pb-4">
+            <div>
+                <h2 class="text-2xl font-bold text-cyan-400">ACTIVE_PROTOCOL: SCANNING</h2>
+                <p class="text-xs text-gray-500">Find the segment containing the AI Hallucination.</p>
+            </div>
+            <div class="text-right">
+                <div id="score-display" class="text-2xl font-bold text-purple-500">SCORE: 00</div>
+            </div>
+        </div>
+
+        <div class="neuro-card p-8 rounded-xl mb-8">
+            <div id="game-content" class="text-lg leading-relaxed text-gray-200">
+                <!-- Game words will be injected here -->
+            </div>
+        </div>
+
+        <div id="feedback-area" class="h-20 flex items-center justify-center text-center">
+            <p id="feedback-text" class="text-xl font-bold"></p>
+        </div>
+
+        <div class="flex justify-center mt-8">
+            <button id="next-btn" onclick="nextRound()" class="btn-glitch opacity-50 pointer-events-none">NEXT_CHALLENGE</button>
+        </div>
+    </main>
+
+    <footer class="p-10 text-center text-[10px] text-gray-600 tracking-tighter uppercase">
+        &copy; 2026 NEURO-GLITCH INDUSTRIES // HUMANITY_VALIDATED_DATA
+    </footer>
+
+    <script>
+        const levels = [
+            {
+                text: "The James Webb Space Telescope was launched in 2021 and primarily observes infrared light. It successfully captured the first-ever image of an exoplanet in 2004, marking a milestone for NASA's deep space exploration.",
+                hallucination: "captured the first-ever image of an exoplanet in 2004",
+                explanation: "Hallucination Detected! The first exoplanet image was taken in 2004 (by VLT), long before Webb was even launched."
+            },
+            {
+                text: "George Washington was the first president of the United States. He is famously known for his refusal to wear a crown and for inventing the steam-powered printing press to help spread the Constitution more quickly.",
+                hallucination: "inventing the steam-powered printing press",
+                explanation: "Hallucination Detected! Washington was a general and president, not the inventor of the steam printing press."
+            },
+            {
+                text: "In the landmark case of Brown v. Board of Education, the Supreme Court ruled that segregation in public schools was unconstitutional. This decision overturned the 1923 ruling of Smith v. Jenkins which had previously mandated school uniforms in all states.",
+                hallucination: "1923 ruling of Smith v. Jenkins which had previously mandated school uniforms",
+                explanation: "Hallucination Detected! Smith v. Jenkins is a fabricated case name; Brown overturned Plessy v. Ferguson."
+            },
+            {
+                text: "The Great Wall of China is a series of fortifications built across the northern borders of ancient Chinese states. It is the only man-made structure visible from the Moon with the naked eye, a fact confirmed by Apollo 11 astronauts.",
+                hallucination: "only man-made structure visible from the Moon with the naked eye",
+                explanation: "Hallucination Detected! This is a common myth often repeated by AI. The wall is not visible from the Moon without aid."
+            }
+        ];
+
+        let currentLevel = 0;
+        let score = 0;
+        let canClick = true;
+
+        function showSection(section) {
+            document.getElementById('landing-section').style.display = section === 'landing' ? 'block' : 'none';
+            document.getElementById('game-section').style.display = section === 'game' ? 'block' : 'none';
+            if (section === 'game') initGame();
+        }
+
+        function initGame() {
+            canClick = true;
+            document.getElementById('next-btn').classList.add('opacity-50', 'pointer-events-none');
+            document.getElementById('feedback-text').innerText = "";
+            
+            const level = levels[currentLevel];
+            const contentDiv = document.getElementById('game-content');
+            contentDiv.innerHTML = "";
+
+            // Split into phrases for easier clicking (rough approximation)
+            const phrases = level.text.split(/(\. |, )/);
+            
+            phrases.forEach(phrase => {
+                if (phrase.trim().length === 0) return;
+                const span = document.createElement('span');
+                span.innerText = phrase;
+                span.className = "hallucination-word";
+                span.onclick = () => checkAnswer(span, phrase, level);
+                contentDiv.appendChild(span);
+            });
+        }
+
+        function checkAnswer(el, selectedText, level) {
+            if (!canClick) return;
+            
+            const isCorrect = selectedText.includes(level.hallucination) || level.hallucination.includes(selectedText);
+            
+            if (isCorrect) {
+                el.classList.add('correct');
+                score += 10;
+                document.getElementById('feedback-text').innerHTML = `<span class="text-cyan-400">${level.explanation}</span>`;
+                canClick = false;
+                document.getElementById('next-btn').classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                el.classList.add('wrong');
+                score = Math.max(0, score - 5);
+                document.getElementById('feedback-text').innerHTML = `<span class="text-red-500">FALSE POSITIVE. SCAN AGAIN.</span>`;
+            }
+            
+            document.getElementById('score-display').innerText = `SCORE: ${score.toString().padStart(2, '0')}`;
+        }
+
+        function nextRound() {
+            currentLevel++;
+            if (currentLevel >= levels.length) {
+                currentLevel = 0; // Loop or end game
+                document.getElementById('game-content').innerHTML = `<div class="text-center py-10"><h2 class="text-3xl text-cyan-400 mb-4">TEST_COMPLETE</h2><p>Final Score: ${score}</p></div>`;
+                document.getElementById('next-btn').innerText = "RESTART_LEVELS";
+            } else {
+                initGame();
+            }
+        }
+    </script>
+</body>
+</html>
