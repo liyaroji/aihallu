@@ -222,15 +222,12 @@
 
         function handleEnter() {
             const intro = document.getElementById('intro');
-            const home = document.getElementById('homepage');
             
             // Warp Transition
             intro.classList.add('warp-out');
             
             setTimeout(() => {
-                intro.style.display = 'none';
-                home.classList.remove('hidden');
-                home.classList.add('animate-pulse'); // Simple arrival effect
+                window.location.href = 'landing.html';
             }, 800);
         }
     </script>
