@@ -237,7 +237,7 @@
 
     <footer class="pb-12 pt-8 text-center">
         <button class="wiggle bg-white text-black font-black px-10 py-4 text-2xl border-b-8 border-r-8 border-purple-600 active:transform active:translate-y-1">
-            VIEW GLOBAL LEADERBOARD
+            FINAL VERDICT: ENTER REALITY
         </button>
         <div class="mt-8 opacity-50 text-xs font-mono">
             V.2.0.24 // BUILT FOR THE BRAVE // NO CAP
@@ -256,31 +256,46 @@
     </div>
 
     <script>
+        let selectedLevel = "";
         function selectLevel(lvl) {
-            const modal = document.getElementById('modal');
-            const title = document.getElementById('modal-title');
-            const desc = document.getElementById('modal-desc');
-            
-            modal.classList.remove('hidden');
-            
-            if(lvl === 'easy') {
-                title.innerText = "CHILL MODE";
-                title.style.color = "var(--cyan)";
-                desc.innerText = "Loading the basics. Don't fall asleep!";
-            } else if (lvl === 'medium') {
-                title.innerText = "CAUTION!";
-                title.style.color = "var(--yellow)";
-                desc.innerText = "Neural pathways shifting. Reality is getting weird.";
-            } else {
-                title.innerText = "DANGER!!";
-                title.style.color = "var(--magenta)";
-                desc.innerText = "Total system failure imminent. Good luck, meatbag.";
-            }
-        }
+    selectedLevel = lvl;  // store selected level
+
+    const modal = document.getElementById('modal');
+    const title = document.getElementById('modal-title');
+    const desc = document.getElementById('modal-desc');
+    
+    modal.classList.remove('hidden');
+    
+    if(lvl === 'easy') {
+        title.innerText = "CHILL MODE";
+        title.style.color = "var(--cyan)";
+        desc.innerText = "Loading the basics. Don't fall asleep!";
+    } 
+    else if (lvl === 'medium') {
+        title.innerText = "CAUTION!";
+        title.style.color = "var(--yellow)";
+        desc.innerText = "Neural pathways shifting. Reality is getting weird.";
+    } 
+    else {
+        title.innerText = "DANGER!!";
+        title.style.color = "var(--magenta)";
+        desc.innerText = "Total system failure imminent. Good luck, meatbag.";
+    }
+}
 
         function closeModal() {
-            document.getElementById('modal').classList.add('hidden');
-        }
+    document.getElementById('modal').classList.add('hidden');
+
+    if (selectedLevel === "easy") {
+        window.location.href = "easymodr.html";
+    } 
+    else if (selectedLevel === "medium") {
+        window.location.href = "medium.html";
+    } 
+    else if (selectedLevel === "hard") {
+        window.location.href = "hardcore2.html";
+    }
+}
     </script>
 </body>
 </html>
