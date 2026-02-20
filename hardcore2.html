@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI SPOTTER // LVL 3: HARDCORE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --magenta: #ff00ff;
+            --cyan: #00ffff;
+            --yellow: #ffff00;
+            --orange: #ff6b00;
+            --purple: #7a00ff;
+            --green: #00ff66;
+            --bg: #0d0221;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 255, 255, 0.15) 0%, transparent 40%),
+                linear-gradient(45deg, #160033 25%, transparent 25%), 
+                linear-gradient(-45deg, #160033 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #160033 75%),
+                linear-gradient(-45deg, transparent 75%, #160033 75%);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px, 40px 40px, 40px 40px;
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .heavy-font { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
+        .arcade-font { font-family: 'Press Start 2P', cursive; }
+
+        /* MAXIMALIST STYLING */
+        .glitch-title {
+            font-size: clamp(3rem, 12vw, 9rem);
+            line-height: 0.8;
+            text-shadow: 8px 8px 0px var(--magenta), -5px -5px 0px var(--cyan), 12px -12px 0px var(--yellow);
+            animation: bounce 0.4s ease-in-out infinite alternate;
+        }
+
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+
+        .neo-panel {
+            background: #000;
+            border: 8px solid #fff;
+            box-shadow: 15px 15px 0px var(--purple), -10px -10px 0px var(--cyan);
+            position: relative;
+        }
+
+        .sentence-node {
+            cursor: pointer;
+            padding: 12px 16px;
+            margin: 6px;
+            display: inline-block;
+            border: 4px solid transparent;
+            transition: 0.1s transform;
+            background: rgba(255,255,255,0.05);
+            line-height: 1.6;
+        }
+
+        .sentence-node:hover {
+            transform: scale(1.02) rotate(-1deg);
+            background: rgba(255,255,255,0.15);
+            border-color: var(--cyan);
+        }
+
+        .sentence-node.selected {
+            background: var(--yellow);
+            color: black !important;
+            border-color: #fff;
+            transform: scale(1.05) rotate(1deg);
+            box-shadow: 8px 8px 0px #000;
+            font-weight: 800;
+        }
+
+        .risk-pill {
+            font-family: 'Press Start 2P';
+            font-size: 8px;
+            padding: 4px 6px;
+            background: #fff;
+            color: #000;
+            margin-right: 10px;
+            display: none;
+            border: 2px solid #000;
+        }
+
+        .scanner-active .risk-pill { display: inline-block; }
+
+        .booster-card {
+            background: #000;
+            border: 4px solid #fff;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        .booster-card:not(:disabled):hover {
+            transform: translateY(-8px) rotate(2deg);
+            background: var(--purple);
+            box-shadow: 10px 10px 0px var(--orange);
+        }
+
+        .booster-card:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
+
+        .flash-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.9);
+            font-size: 10vw;
+            pointer-events: none;
+        }
+
+        .hud-stat {
+            background: #000;
+            border: 4px solid #fff;
+            padding: 8px 16px;
+            box-shadow: 6px 6px 0px var(--magenta);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- 1. START SCREEN -->
+    <div id="view-start" class="min-h-screen flex flex-col items-center justify-center text-center">
+        <h1 class="heavy-font glitch-title mb-12">HARDCORE<br>MODE</h1>
+        <div class="bg-white text-black px-10 py-4 heavy-font text-3xl mb-12 transform -rotate-2 border-8 border-black shadow-[15px_15px_0px_var(--orange)]">
+            +15 PTS // ELITE DATA ONLY
+        </div>
+        <button onclick="showMenu()" class="bg-cyan-400 text-black border-8 border-black px-16 py-8 heavy-font text-5xl shadow-[12px_12px_0px_white] hover:scale-110 active:scale-95 transition-transform">
+            INITIATE
+        </button>
+    </div>
+
+    <!-- 2. ROUND SELECTION -->
+    <div id="view-menu" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
+        <h2 class="heavy-font text-6xl mb-16 text-yellow-400 text-center" style="text-shadow: 5px 5px 0px var(--purple)">SELECT DATASET</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 w-full max-w-6xl">
+            <button onclick="startRound(0)" class="neo-panel p-10 flex flex-col items-center hover:bg-magenta transition-colors group">
+                <span class="text-7xl mb-4 group-hover:scale-125 transition-transform">🌍</span>
+                <span class="heavy-font text-3xl">ROUND 01</span>
+                <span class="arcade-font text-[10px] mt-4 opacity-70">GEOPOLITICS</span>
+            </button>
+            <button onclick="startRound(1)" class="neo-panel p-10 flex flex-col items-center hover:bg-cyan-400 transition-colors group" style="box-shadow: 15px 15px 0px var(--orange);">
+                <span class="text-7xl mb-4 group-hover:scale-125 transition-transform">⚛️</span>
+                <span class="heavy-font text-3xl">ROUND 02</span>
+                <span class="arcade-font text-[10px] mt-4 opacity-70">QUANTUM PHYSICS</span>
+            </button>
+            <button onclick="startRound(2)" class="neo-panel p-10 flex flex-col items-center hover:bg-yellow-400 transition-colors group" style="box-shadow: 15px 15px 0px var(--green);">
+                <span class="text-7xl mb-4 group-hover:scale-125 transition-transform">⚖️</span>
+                <span class="heavy-font text-3xl">ROUND 03</span>
+                <span class="arcade-font text-[10px] mt-4 opacity-70">ADVANCED LAW</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. GAMEPLAY -->
+    <div id="view-game" class="hidden pt-36">
+        <!-- HUD -->
+        <div class="fixed top-0 left-0 w-full p-4 flex flex-wrap justify-center gap-4 z-[100] bg-black border-b-8 border-white">
+            <div class="hud-stat">
+                <div class="arcade-font text-[8px] mb-1 text-cyan-400">SCORE</div>
+                <div id="hud-score" class="heavy-font text-3xl text-yellow-400">0</div>
+            </div>
+            <div class="hud-stat" style="box-shadow: 6px 6px 0px var(--cyan);">
+                <div class="arcade-font text-[8px] mb-1 text-magenta">STREAK</div>
+                <div id="hud-streak" class="heavy-font text-3xl text-green-400">0</div>
+            </div>
+            <div class="hud-stat" style="box-shadow: 6px 6px 0px var(--orange);">
+                <div class="arcade-font text-[8px] mb-1 text-white">ACCURACY</div>
+                <div id="hud-acc" class="heavy-font text-3xl text-white">0%</div>
+            </div>
+            <div class="hud-stat" style="box-shadow: 6px 6px 0px var(--green);">
+                <div class="arcade-font text-[8px] mb-1 text-yellow-400">HITS</div>
+                <div id="hud-hits" class="heavy-font text-3xl text-white">0</div>
+            </div>
+            <div class="bg-white text-black p-4 flex items-center heavy-font text-xl border-4 border-black">
+                <span id="hud-round-info">ROUND 1 OF 3</span>
+            </div>
+        </div>
+
+        <div class="max-w-5xl mx-auto px-4">
+            <div id="game-card" class="neo-panel p-8 md:p-16 mb-12">
+                <div class="absolute -top-10 -left-6 bg-magenta text-white p-4 border-4 border-black heavy-font text-2xl transform rotate-[-3deg] shadow-[8px_8px_0px_black]">
+                    QUESTION <span id="q-count">1/5</span>
+                </div>
+
+                <div id="content-box" class="text-2xl md:text-4xl leading-relaxed mb-16 select-none">
+                    <!-- Sentences Injected Here -->
+                </div>
+
+                <!-- BOOSTERS -->
+                <div class="grid grid-cols-3 gap-6 mb-12">
+                    <button id="btn-scan" onclick="boostScanner()" class="booster-card p-6 flex flex-col items-center">
+                        <span class="text-4xl mb-2">🔍</span>
+                        <span class="arcade-font text-[8px] text-cyan-400">AI SCANNER</span>
+                        <span id="count-scan" class="heavy-font text-sm mt-2 text-white">1 LEFT</span>
+                    </button>
+                    <button id="btn-amp" onclick="boostAmp()" class="booster-card p-6 flex flex-col items-center">
+                        <span class="text-4xl mb-2">📡</span>
+                        <span class="arcade-font text-[8px] text-magenta">AMPLIFIER</span>
+                        <span id="count-amp" class="heavy-font text-sm mt-2 text-white">1 LEFT</span>
+                    </button>
+                    <button id="btn-freeze" onclick="boostFreeze()" class="booster-card p-6 flex flex-col items-center">
+                        <span class="text-4xl mb-2">🧊</span>
+                        <span class="arcade-font text-[8px] text-yellow-400">TIME FREEZE</span>
+                        <span id="count-freeze" class="heavy-font text-sm mt-2 text-white">1 LEFT</span>
+                    </button>
+                </div>
+
+                <button id="btn-lock" onclick="submitChoice()" disabled class="w-full bg-green-500 text-black heavy-font text-5xl py-8 border-8 border-black shadow-[10px_10px_0px_white] hover:bg-yellow-400 disabled:opacity-20 transition-all">
+                    LOCK IN
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. ROUND SUMMARY -->
+    <div id="view-summary" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="neo-panel p-12 max-w-3xl w-full text-center">
+            <h2 class="heavy-font text-8xl text-yellow-400 mb-10" style="text-shadow: 8px 8px 0px var(--magenta)">ROUND CLEAR</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div class="border-8 border-white p-8 bg-black">
+                    <div class="arcade-font text-xs mb-4 text-cyan-400">ROUND SCORE</div>
+                    <div id="sum-score" class="heavy-font text-6xl">0</div>
+                </div>
+                <div class="border-8 border-white p-8 bg-black">
+                    <div class="arcade-font text-xs mb-4 text-magenta">ACCURACY</div>
+                    <div id="sum-acc" class="heavy-font text-6xl">0%</div>
+                </div>
+                <div class="border-8 border-white p-8 bg-black">
+                    <div class="arcade-font text-xs mb-4 text-orange">HITS</div>
+                    <div id="sum-hits" class="heavy-font text-6xl">0</div>
+                </div>
+            </div>
+            <div class="flex flex-col md:flex-row gap-6">
+                <button onclick="startRound(currentRoundIdx)" class="flex-1 bg-white text-black heavy-font text-3xl py-6 border-8 border-black hover:bg-green-400 transition-colors">RETRY ROUND</button>
+                <button onclick="showMenu()" class="flex-1 bg-magenta text-white heavy-font text-3xl py-6 border-8 border-black hover:bg-cyan-400 transition-colors">BACK TO MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FEEDBACK POP -->
+    <div id="feedback-layer" class="flash-overlay hidden">
+        <span id="feedback-text" class="heavy-font italic text-white" style="text-shadow: 10px 10px 0px #000"></span>
+    </div>
+
+    <script>
+        // DATA STRUCTURE
+        const GAME_DATA = [
+            { // Round 1: Geopolitics
+                name: "GEOPOLITICS",
+                questions: [
+                    {
+                        parts: [
+                            { s: "The Treaty of Westphalia in 1648 established the modern concept of state sovereignty.", r: 4, h: false },
+                            { s: "It effectively ended the Thirty Years' War and the Eighty Years' War in Europe.", r: 12, h: false },
+                            { s: "The treaty was signed in the secret underwater vaults of the Vatican City.", r: 98, h: true },
+                            { s: "Scholars view it as the foundational moment of international relations theory.", r: 7, h: false }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "The South China Sea is a critical maritime gateway for global trade routes.", r: 5, h: false },
+                            { s: "Several nations claim overlapping territorial waters based on the UNCLOS framework.", r: 14, h: false },
+                            { s: "An artificial island made of recycled plastic bottles was declared a sovereign kingdom in 2021.", r: 95, h: true },
+                            { s: "Freedom of navigation operations are frequently conducted to maintain open access.", r: 9, h: false }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "The Arctic Council promotes cooperation among the eight Arctic states on environmental issues.", r: 3, h: false },
+                            { s: "Russia, Canada, and the United States are among the primary members with voting power.", r: 8, h: false },
+                            { s: "The council recently approved a plan to melt the permafrost to find lost viking gold.", r: 99, h: true },
+                            { s: "Climate change is accelerating the accessibility of northern sea routes.", r: 11, h: false }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "Soft power is a term coined by Joseph Nye to describe influence through culture and values.", r: 6, h: false },
+                            { s: "It contrasts with 'hard power', which relies on military force or economic coercion.", r: 4, h: false },
+                            { s: "The Global Soft Power Index ranks nations based on their annual pizza exports.", r: 92, h: true },
+                            { s: "Education and diplomacy are considered core pillars of a nation's soft power.", r: 13, h: false }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "The African Union was established to accelerate the integration of the continent.", r: 2, h: false },
+                            { s: "It succeeded the Organization of African Unity and is headquartered in Addis Ababa.", r: 15, h: false },
+                            { s: "The AU recently launched a space station powered by kinetic energy from marathon runners.", r: 97, h: true },
+                            { s: "The Agenda 2063 framework outlines the strategic plan for Africa's transformation.", r: 10, h: false }
+                        ]
+                    }
+                ]
+            },
+            { // Round 2: Quantum Physics
+                name: "QUANTUM PHYSICS",
+                questions: [
+                    {
+                        parts: [
+                            { s: "Quantum entanglement involves pairs of particles that share identical quantum states.", r: 5, h: false },
+                            { s: "Measurements on one particle instantly affect the state of the other across any distance.", r: 18, h: false },
+                            { s: "Einstein referred to this phenomenon as 'Spooky Action at a Distance'.", r: 4, h: false },
+                            { s: "The speed of entanglement transfer was measured to be exactly 4,000 times faster than a caffeinated cheetah.", r: 96, h: true }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "The Heisenberg Uncertainty Principle states that position and momentum cannot both be known precisely.", r: 6, h: false },
+                            { s: "This is a fundamental limit of nature, not a flaw in measurement technology.", r: 11, h: false },
+                            { s: "Observation of a quantum system inevitably causes the wave function to collapse.", r: 9, h: false },
+                            { s: "The principle was discovered after Werner Heisenberg lost his car keys in a dark alley.", r: 94, h: true }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "Superposition allows a particle to exist in multiple potential states simultaneously.", r: 10, h: false },
+                            { s: "Schrödinger's Cat is a thought experiment illustrating the paradox of quantum states.", r: 3, h: false },
+                            { s: "Quantum computers use qubits to perform calculations much faster than classical bits.", r: 14, h: false },
+                            { s: "Modern qubits are stabilized using a coating of liquid nitrogen and organic honey.", r: 98, h: true }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "The Standard Model of particle physics describes three of the four fundamental forces.", r: 5, h: false },
+                            { s: "The Higgs Boson provides mass to other elementary particles via the Higgs field.", r: 12, h: false },
+                            { s: "Quarks are the fundamental constituents of protons and neutrons.", r: 8, h: false },
+                            { s: "The 'Flavor' of a quark is determined by the specific type of music it emits.", r: 99, h: true }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "Quantum tunneling allows particles to pass through barriers that seem impenetrable.", r: 7, h: false },
+                            { s: "This process is vital for the nuclear fusion that powers stars like our Sun.", r: 13, h: false },
+                            { s: "Tunneling occurs because the wave function of a particle has a non-zero tail.", r: 9, h: false },
+                            { s: "Scientists have built a 'Human Tunneler' that allows people to walk through bank vaults.", r: 93, h: true }
+                        ]
+                    }
+                ]
+            },
+            { // Round 3: Law
+                name: "ADVANCED LAW",
+                questions: [
+                    {
+                        parts: [
+                            { s: "Stare decisis is the legal principle of determining points in litigation according to precedent.", r: 5, h: false },
+                            { s: "It ensures that similar cases are decided consistently over time to provide stability.", r: 14, h: false },
+                            { s: "The Supreme Court is required by law to flip a coin if a decision is tied 4-4.", r: 99, h: true },
+                            { s: "Higher courts set binding precedents that lower courts must follow.", r: 8, h: false }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "Habeas corpus is a recourse in law through which a person can report unlawful detention.", r: 4, h: false },
+                            { s: "It is often referred to as the 'Great Writ' of liberty in common law traditions.", r: 9, h: false },
+                            { s: "The writ was famously used by King Henry VIII to imprison his own shadow.", r: 97, h: true },
+                            { s: "The court demands that the custodian bring the prisoner before the bench.", r: 12, h: false }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "The Commerce Clause grants Congress the power to regulate trade among several states.", r: 6, h: false },
+                            { s: "It has been interpreted broadly to cover many aspects of modern economic life.", r: 15, h: false },
+                            { s: "Gibbons v. Ogden was a landmark case defining the scope of this congressional power.", r: 11, h: false },
+                            { s: "The clause was originally written to protect the interstate trade of magic beans.", r: 92, h: true }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "A tort is a civil wrong that causes a claimant to suffer loss or harm.", r: 3, h: false },
+                            { s: "Negligence occurs when a party fails to exercise reasonable care toward others.", r: 10, h: false },
+                            { s: "Strict liability applies in cases involving inherently dangerous activities.", r: 8, h: false },
+                            { s: "In Australia, it is a tort to accidentally step on a ghost in a public library.", r: 98, h: true }
+                        ]
+                    },
+                    {
+                        parts: [
+                            { s: "International law is primarily governed by treaties, customs, and general principles.", r: 5, h: false },
+                            { s: "The International Court of Justice is the principal judicial organ of the UN.", r: 13, h: false },
+                            { s: "The Rome Statute established the International Criminal Court in 2002.", r: 9, h: false },
+                            { s: "Global laws are enforced by a secret tribunal of 12 immortal owls in Switzerland.", r: 96, h: true }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // GAME STATE
+        let currentRoundIdx = 0;
+        let currentQIdx = 0;
+        let selectedIdx = null;
+        let score = 0;
+        let streak = 0;
+        let totalHits = 0;
+        let totalAttempts = 0;
+        let roundScore = 0;
+        let roundHits = 0;
+        let boosters = { scan: 1, amp: 1, freeze: 1 };
+
+        function showMenu() {
+            document.getElementById('view-start').classList.add('hidden');
+            document.getElementById('view-summary').classList.add('hidden');
+            document.getElementById('view-game').classList.add('hidden');
+            document.getElementById('view-menu').classList.remove('hidden');
+        }
+
+        function startRound(idx) {
+            currentRoundIdx = idx;
+            currentQIdx = 0;
+            roundScore = 0;
+            roundHits = 0;
+            boosters = { scan: 1, amp: 1, freeze: 1 };
+            
+            document.getElementById('view-menu').classList.add('hidden');
+            document.getElementById('view-summary').classList.add('hidden');
+            document.getElementById('view-game').classList.remove('hidden');
+            
+            updateBoosterUI();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            selectedIdx = null;
+            document.getElementById('btn-lock').disabled = true;
+            document.getElementById('content-box').classList.remove('scanner-active');
+            
+            const round = GAME_DATA[currentRoundIdx];
+            const q = round.questions[currentQIdx];
+            const box = document.getElementById('content-box');
+            box.innerHTML = '';
+            
+            q.parts.forEach((item, i) => {
+                const span = document.createElement('span');
+                span.className = 'sentence-node';
+                span.innerHTML = `<span class="risk-pill">RISK: ${item.r}%</span>${item.s}`;
+                span.onclick = () => selectSentence(i);
+                box.appendChild(span);
+            });
+
+            document.getElementById('q-count').innerText = `${currentQIdx + 1}/5`;
+            document.getElementById('hud-round-info').innerText = `ROUND ${currentRoundIdx + 1} OF 3`;
+            updateHUD();
+        }
+
+        function selectSentence(i) {
+            selectedIdx = i;
+            document.querySelectorAll('.sentence-node').forEach((el, idx) => {
+                el.classList.toggle('selected', idx === i);
+            });
+            document.getElementById('btn-lock').disabled = false;
+        }
+
+        function submitChoice() {
+            const q = GAME_DATA[currentRoundIdx].questions[currentQIdx];
+            const isCorrect = q.parts[selectedIdx].h;
+            
+            totalAttempts++;
+            const flash = document.getElementById('feedback-layer');
+            const txt = document.getElementById('feedback-text');
+            
+            flash.classList.remove('hidden');
+            if (isCorrect) {
+                score += 15;
+                roundScore += 15;
+                streak++;
+                totalHits++;
+                roundHits++;
+                txt.innerText = "CORRECT";
+                txt.style.color = "var(--green)";
+            } else {
+                streak = 0;
+                txt.innerText = "INCORRECT";
+                txt.style.color = "var(--magenta)";
+                document.getElementById('game-card').animate([
+                    { transform: 'translateX(-15px) rotate(2deg)' },
+                    { transform: 'translateX(15px) rotate(-2deg)' },
+                    { transform: 'translateX(0)' }
+                ], { duration: 100, iterations: 3 });
+            }
+
+            updateHUD();
+
+            setTimeout(() => {
+                flash.classList.add('hidden');
+                currentQIdx++;
+                if (currentQIdx < 5) {
+                    loadQuestion();
+                } else {
+                    showSummary();
+                }
+            }, 800);
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-score').innerText = score;
+            document.getElementById('hud-streak').innerText = streak;
+            document.getElementById('hud-hits').innerText = totalHits;
+            const acc = totalAttempts > 0 ? Math.round((totalHits / totalAttempts) * 100) : 0;
+            document.getElementById('hud-acc').innerText = acc + "%";
+        }
+
+        function updateBoosterUI() {
+            document.getElementById('count-scan').innerText = `${boosters.scan} LEFT`;
+            document.getElementById('count-amp').innerText = `${boosters.amp} LEFT`;
+            document.getElementById('count-freeze').innerText = `${boosters.freeze} LEFT`;
+            
+            document.getElementById('btn-scan').disabled = boosters.scan === 0;
+            document.getElementById('btn-amp').disabled = boosters.amp === 0;
+            document.getElementById('btn-freeze').disabled = boosters.freeze === 0;
+        }
+
+        function boostScanner() {
+            if (boosters.scan > 0) {
+                boosters.scan--;
+                document.getElementById('content-box').classList.add('scanner-active');
+                updateBoosterUI();
+            }
+        }
+
+        function boostAmp() {
+            if (boosters.amp > 0) {
+                boosters.amp--;
+                const q = GAME_DATA[currentRoundIdx].questions[currentQIdx];
+                let maxIdx = 0;
+                q.parts.forEach((p, i) => { if (p.r > q.parts[maxIdx].r) maxIdx = i; });
+                const nodes = document.querySelectorAll('.sentence-node');
+                nodes[maxIdx].style.border = "6px dashed var(--magenta)";
+                nodes[maxIdx].style.boxShadow = "0 0 30px var(--magenta)";
+                updateBoosterUI();
+            }
+        }
+
+        function boostFreeze() {
+            if (boosters.freeze > 0) {
+                boosters.freeze--;
+                document.body.style.filter = "hue-rotate(180deg) contrast(1.5)";
+                setTimeout(() => { document.body.style.filter = ""; }, 3000);
+                updateBoosterUI();
+            }
+        }
+
+        function showSummary() {
+            document.getElementById('view-game').classList.add('hidden');
+            document.getElementById('view-summary').classList.remove('hidden');
+            document.getElementById('sum-score').innerText = roundScore;
+            document.getElementById('sum-hits').innerText = roundHits;
+            const acc = Math.round((roundHits / 5) * 100);
+            document.getElementById('sum-acc').innerText = acc + "%";
+        }
+    </script>
+</body>
+</html>

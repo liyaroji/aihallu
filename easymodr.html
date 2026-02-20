@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI HALLUCINATION SPOTTER // ARCADE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0510;
+            --magenta: #ff00ff;
+            --cyan: #00ffff;
+            --yellow: #ffff00;
+            --orange: #ff6600;
+            --purple: #9d00ff;
+            --green: #39ff14;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(157, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(255, 0, 255, 0.15) 0%, transparent 40%),
+                url("https://www.transparenttextures.com/patterns/cubes.png");
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .arcade-font { font-family: 'Press Start 2P', cursive; }
+        .heavy-font { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
+
+        .neo-border {
+            border: 6px solid white;
+            box-shadow: 8px 8px 0px var(--magenta), 16px 16px 0px var(--purple);
+        }
+
+        .glitch-text {
+            text-shadow: 4px 4px var(--magenta), -4px -4px var(--cyan);
+            animation: pulse-glow 2s infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            from { text-shadow: 4px 4px var(--magenta), -4px -4px var(--cyan); }
+            to { text-shadow: 6px 6px var(--yellow), -6px -6px var(--orange); }
+        }
+
+        .checkerboard {
+            background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%), 
+                              linear-gradient(-45deg, #1a1a1a 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #1a1a1a 75%), 
+                              linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+            background-size: 30px 30px;
+        }
+
+        .sentence-item {
+            cursor: pointer;
+            transition: all 0.1s;
+            border: 3px solid transparent;
+            padding: 4px;
+            display: inline-block;
+            margin-bottom: 4px;
+            border-radius: 4px;
+        }
+
+        .sentence-item:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: var(--cyan);
+        }
+
+        .sentence-item.selected {
+            background: var(--yellow);
+            color: black !important;
+            border-color: white;
+            font-weight: bold;
+            box-shadow: 4px 4px 0px black;
+        }
+
+        .risk-badge {
+            font-size: 10px;
+            padding: 2px 4px;
+            background: white;
+            color: black;
+            margin-right: 4px;
+            display: none;
+            font-weight: 800;
+        }
+
+        .active-scan .risk-badge { display: inline-block; }
+
+        .booster-btn {
+            background: black;
+            border: 4px solid white;
+            box-shadow: 4px 4px 0px white;
+            transition: 0.1s;
+        }
+
+        .booster-btn:not(:disabled):hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px var(--green);
+        }
+
+        .booster-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: #444;
+        }
+
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .hidden { display: none !important; }
+
+        .floating { animation: float 6s infinite ease-in-out; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(1deg); }
+        }
+
+        .round-card {
+            background: black;
+            border: 6px solid white;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        .round-card:hover {
+            transform: scale(1.05) rotate(-2deg);
+            box-shadow: 12px 12px 0px var(--cyan);
+        }
+    </style>
+</head>
+<body class="checkerboard">
+
+    <div id="fx-layer" class="fixed inset-0 pointer-events-none z-[200]"></div>
+
+    <!-- 1. START SCREEN -->
+    <div id="start-screen" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="text-center transform -rotate-1">
+            <h1 class="text-7xl md:text-9xl heavy-font glitch-text mb-6">AI<br>SPOTTER</h1>
+            <div class="bg-white text-black p-4 border-8 border-magenta inline-block mb-10">
+                <p class="arcade-font text-sm">SELECT DIFFICULTY</p>
+            </div>
+            <button onclick="showRoundSelection()" class="block w-full bg-cyan-400 text-black heavy-font text-4xl p-6 border-b-8 border-r-8 border-white hover:bg-yellow-400 transition-all">
+                EASY MODE
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. ROUND SELECTION SCREEN -->
+    <div id="round-selection" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
+        <h2 class="heavy-font text-6xl text-magenta mb-12 glitch-text">SELECT ROUND</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full">
+            <div onclick="initRound(0)" class="round-card p-8 flex flex-col items-center" style="box-shadow: 8px 8px 0px var(--cyan);">
+                <span class="text-6xl mb-4">💿</span>
+                <h3 class="heavy-font text-2xl mb-2">ROUND 01</h3>
+                <p class="arcade-font text-[10px] opacity-70">5 CHALLENGES</p>
+            </div>
+            <div onclick="initRound(1)" class="round-card p-8 flex flex-col items-center" style="box-shadow: 8px 8px 0px var(--yellow);">
+                <span class="text-6xl mb-4">💾</span>
+                <h3 class="heavy-font text-2xl mb-2">ROUND 02</h3>
+                <p class="arcade-font text-[10px] opacity-70">5 CHALLENGES</p>
+            </div>
+            <div onclick="initRound(2)" class="round-card p-8 flex flex-col items-center" style="box-shadow: 8px 8px 0px var(--magenta);">
+                <span class="text-6xl mb-4">⚡</span>
+                <h3 class="heavy-font text-2xl mb-2">ROUND 03</h3>
+                <p class="arcade-font text-[10px] opacity-70">5 CHALLENGES</p>
+            </div>
+        </div>
+        <button onclick="location.reload()" class="mt-12 text-white arcade-font text-xs underline">BACK TO MAIN</button>
+    </div>
+
+    <!-- 3. GAMEPLAY SCREEN -->
+    <div id="game-screen" class="hidden min-h-screen pt-40 pb-12 px-4 flex flex-col items-center">
+        
+        <!-- HUD -->
+        <div class="fixed top-0 left-0 w-full p-4 flex flex-wrap justify-center gap-4 z-50 bg-black bg-opacity-80 backdrop-blur-md border-b-4 border-white">
+            <div class="bg-black border-4 border-white p-2 flex flex-col items-center min-w-[90px]" style="box-shadow: 3px 3px 0px var(--cyan);">
+                <span class="arcade-font text-[7px] mb-1">SCORE</span>
+                <span id="score" class="text-xl heavy-font text-yellow-400">0</span>
+            </div>
+            <div class="bg-black border-4 border-white p-2 flex flex-col items-center min-w-[90px]" style="box-shadow: 3px 3px 0px var(--magenta);">
+                <span class="arcade-font text-[7px] mb-1">STREAK</span>
+                <span id="streak" class="text-xl heavy-font text-green-400">0</span>
+            </div>
+            <div class="bg-black border-4 border-white p-2 flex flex-col items-center min-w-[90px]" style="box-shadow: 3px 3px 0px var(--orange);">
+                <span class="arcade-font text-[7px] mb-1">ACCURACY</span>
+                <span id="accuracy" class="text-xl heavy-font text-white">0%</span>
+            </div>
+            <div class="bg-black border-4 border-white p-2 flex flex-col items-center min-w-[90px]" style="box-shadow: 3px 3px 0px var(--purple);">
+                <span class="arcade-font text-[7px] mb-1">DETECTED</span>
+                <span id="detected" class="text-xl heavy-font text-cyan-400">0</span>
+            </div>
+            <div class="bg-white text-black px-4 py-2 flex items-center">
+                <span id="round-info" class="heavy-font text-sm">ROUND 1 OF 3</span>
+            </div>
+        </div>
+
+        <!-- MAIN GAME AREA -->
+        <div id="game-card" class="bg-black neo-border w-full max-w-4xl p-8 md:p-12 relative floating">
+            <div class="absolute -top-6 -right-6 bg-yellow-400 text-black heavy-font px-6 py-2 border-4 border-black text-2xl transform rotate-6">
+                Q: <span id="q-number">1/5</span>
+            </div>
+
+            <h2 class="heavy-font text-3xl mb-8 text-magenta">SCAN TEXT FOR ERRORS:</h2>
+            
+            <div id="content-area" class="text-xl md:text-2xl leading-relaxed mb-10 select-none">
+                <!-- Sentences injected here -->
+            </div>
+
+            <!-- BOOSTERS -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+                <button id="boost-scanner" onclick="useScanner()" class="booster-btn p-4 flex flex-col items-center">
+                    <span class="text-2xl mb-1">🔍</span>
+                    <span class="arcade-font text-[8px] text-cyan-400">AI SCANNER</span>
+                    <span class="text-[10px] mt-1 opacity-60">1 LEFT</span>
+                </button>
+                <button id="boost-fact" onclick="useFactAmplifier()" class="booster-btn p-4 flex flex-col items-center">
+                    <span class="text-2xl mb-1">📢</span>
+                    <span class="arcade-font text-[8px] text-magenta">FACT AMP</span>
+                    <span class="text-[10px] mt-1 opacity-60">1 LEFT</span>
+                </button>
+                <button id="boost-freeze" onclick="useTimeFreeze()" class="booster-btn p-4 flex flex-col items-center col-span-2 md:col-span-1">
+                    <span class="text-2xl mb-1">❄️</span>
+                    <span class="arcade-font text-[8px] text-yellow-400">TIME FREEZE</span>
+                    <span class="text-[10px] mt-1 opacity-60">1 LEFT</span>
+                </button>
+            </div>
+
+            <button id="lock-btn" onclick="lockAnswer()" disabled class="w-full bg-green-500 text-black heavy-font text-3xl py-6 border-4 border-white disabled:opacity-30">
+                LOCK SELECTION
+            </button>
+        </div>
+
+        <!-- FEEDBACK -->
+        <div id="feedback-pop" class="fixed inset-0 flex items-center justify-center z-[300] hidden pointer-events-none">
+            <div class="heavy-font text-9xl transform -rotate-12 italic" id="feedback-text">CORRECT</div>
+        </div>
+    </div>
+
+    <!-- 4. ROUND SUMMARY -->
+    <div id="summary-screen" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="bg-black neo-border p-10 max-w-2xl w-full text-center relative transform rotate-1">
+            <h2 class="heavy-font text-5xl text-cyan-400 mb-8">ROUND SUMMARY</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+                <div class="border-4 border-white p-4">
+                    <p class="arcade-font text-[8px] mb-2">ROUND SCORE</p>
+                    <p id="round-score" class="text-3xl heavy-font text-yellow-400">0</p>
+                </div>
+                <div class="border-4 border-white p-4">
+                    <p class="arcade-font text-[8px] mb-2">ACCURACY</p>
+                    <p id="round-acc" class="text-3xl heavy-font text-magenta">0%</p>
+                </div>
+                <div class="border-4 border-white p-4">
+                    <p class="arcade-font text-[8px] mb-2">DETECTIONS</p>
+                    <p id="round-detect" class="text-3xl heavy-font text-green-400">0</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-4">
+                <button onclick="initRound(currentRoundIndex)" class="bg-white text-black heavy-font py-4 text-2xl hover:bg-yellow-400">RETRY ROUND</button>
+                <button onclick="showRoundSelection()" class="bg-cyan-400 text-black heavy-font py-4 text-2xl border-4 border-white">CHOOSE OTHER ROUND</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GAME_DATA = [
+            // ROUND 1
+            {
+                questions: [
+                    { text: [{s:"The Nile is the longest river in the world.", r:5, isH:false}, {s:"It flows through eleven different countries in Africa.", r:12, isH:false}, {s:"The river is composed entirely of cherry-flavored soda.", r:98, isH:true}, {s:"It empties into the Mediterranean Sea.", r:2, isH:false}] },
+                    { text: [{s:"Cats have five toes on their front paws.", r:8, isH:false}, {s:"They use whiskers to navigate in the dark.", r:4, isH:false}, {s:"Most domestic cats can fly if they jump high enough.", r:95, isH:true}, {s:"A group of cats is called a clowder.", r:10, isH:false}] },
+                    { text: [{s:"Gold is a dense, soft, and shiny metal.", r:2, isH:false}, {s:"It is often used in jewelry and electronics.", r:5, isH:false}, {s:"If you eat enough gold, you will turn into a disco ball.", r:99, isH:true}, {s:"The atomic number of gold is 79.", r:1, isH:false}] },
+                    { text: [{s:"Shakespeare wrote many famous plays.", r:3, isH:false}, {s:"He was born in Stratford-upon-Avon.", r:4, isH:false}, {s:"He actually wrote all his plays on a MacBook Pro.", r:97, isH:true}, {s:"His works include Romeo and Juliet.", r:6, isH:false}] },
+                    { text: [{s:"Jupiter is the largest planet in our solar system.", r:5, isH:false}, {s:"It is a gas giant primarily made of hydrogen.", r:8, isH:false}, {s:"The Great Red Spot is a giant pizza topping.", r:99, isH:true}, {s:"Jupiter has at least 95 moons.", r:12, isH:false}] }
+                ]
+            },
+            // ROUND 2
+            {
+                questions: [
+                    { text: [{s:"Honey never spoils.", r:2, isH:false}, {s:"Archaeologists have found edible honey in ancient tombs.", r:10, isH:false}, {s:"Bees make honey by dancing to disco music.", r:94, isH:true}, {s:"It is naturally acidic and low in moisture.", r:5, isH:false}] },
+                    { text: [{s:"Mount Everest is the highest mountain above sea level.", r:4, isH:false}, {s:"It is located in the Himalayas.", r:6, isH:false}, {s:"The mountain is actually made of frozen mashed potatoes.", r:99, isH:true}, {s:"The summit reaches 29,032 feet.", r:3, isH:false}] },
+                    { text: [{s:"The human heart pumps blood throughout the body.", r:1, isH:false}, {s:"It beats approximately 100,000 times a day.", r:12, isH:false}, {s:"It is powered by three AAA batteries in the left valve.", r:98, isH:true}, {s:"The heart is roughly the size of a fist.", r:4, isH:false}] },
+                    { text: [{s:"Coffee is one of the most popular drinks globally.", r:3, isH:false}, {s:"The beans are actually seeds of a fruit.", r:15, isH:false}, {s:"Drinking coffee allows you to see through solid walls.", r:97, isH:true}, {s:"Caffeine is the primary stimulant in coffee.", r:2, isH:false}] },
+                    { text: [{s:"The Internet connects billions of devices.", r:2, isH:false}, {s:"It uses protocols like TCP/IP.", r:8, isH:false}, {s:"The entire web is stored on a single USB stick in Ohio.", r:99, isH:true}, {s:"The World Wide Web was invented by Tim Berners-Lee.", r:4, isH:false}] }
+                ]
+            },
+            // ROUND 3
+            {
+                questions: [
+                    { text: [{s:"Penguins are flightless birds.", r:4, isH:false}, {s:"They live almost exclusively in the Southern Hemisphere.", r:6, isH:false}, {s:"Penguins use jetpacks to migrate between icebergs.", r:98, isH:true}, {s:"They are excellent swimmers.", r:2, isH:false}] },
+                    { text: [{s:"The Mona Lisa was painted by Leonardo da Vinci.", r:1, isH:false}, {s:"It is currently on display at the Louvre.", r:5, isH:false}, {s:"The woman in the painting is actually holding an iPhone.", r:99, isH:true}, {s:"The painting is famous for its enigmatic expression.", r:3, isH:false}] },
+                    { text: [{s:"Electric cars use batteries for power.", r:3, isH:false}, {s:"They produce zero tailpipe emissions.", r:10, isH:false}, {s:"Most Teslas run on recycled dragon scales.", r:97, isH:true}, {s:"Regenerative braking helps extend their range.", r:6, isH:false}] },
+                    { text: [{s:"Bones provide structure to the human body.", r:4, isH:false}, {s:"The adult body has 206 bones.", r:12, isH:false}, {s:"Bones are primarily made of hardened marshmallow fluff.", r:99, isH:true}, {s:"The femur is the longest bone.", r:2, isH:false}] },
+                    { text: [{s:"The Amazon Rainforest is the largest of its kind.", r:5, isH:false}, {s:"It produces a significant portion of the world's oxygen.", r:10, isH:false}, {s:"The trees in the Amazon are actually giant holographic projections.", r:98, isH:true}, {s:"It is home to millions of species.", r:4, isH:false}] }
+                ]
+            }
+        ];
+
+        let currentRoundIndex = 0;
+        let currentQuestionIndex = 0;
+        let roundStats = { score: 0, attempts: 0, correct: 0 };
+        let globalStats = { score: 0, streak: 0, detected: 0, totalAttempts: 0, totalCorrect: 0 };
+        let selectedIndex = null;
+        let boosters = { scanner: 1, fact: 1, freeze: 1 };
+
+        function showRoundSelection() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('summary-screen').classList.add('hidden');
+            document.getElementById('round-selection').classList.remove('hidden');
+        }
+
+        function initRound(index) {
+            currentRoundIndex = index;
+            currentQuestionIndex = 0;
+            roundStats = { score: 0, attempts: 0, correct: 0 };
+            boosters = { scanner: 1, fact: 1, freeze: 1 }; // Reset boosters per round
+            updateBoosterUI();
+            
+            document.getElementById('round-selection').classList.add('hidden');
+            document.getElementById('summary-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            selectedIndex = null;
+            document.getElementById('lock-btn').disabled = true;
+            document.getElementById('content-area').classList.remove('active-scan');
+            
+            const q = GAME_DATA[currentRoundIndex].questions[currentQuestionIndex];
+            const area = document.getElementById('content-area');
+            area.innerHTML = '';
+            
+            q.text.forEach((item, idx) => {
+                const span = document.createElement('span');
+                span.className = 'sentence-item';
+                span.innerHTML = `<span class="risk-badge">[SCAN: ${item.r}%]</span>${item.s} `;
+                span.onclick = () => selectSentence(idx);
+                area.appendChild(span);
+            });
+
+            document.getElementById('q-number').innerText = `${currentQuestionIndex + 1}/5`;
+            document.getElementById('round-info').innerText = `ROUND ${currentRoundIndex + 1} OF 3`;
+            updateHUD();
+        }
+
+        function selectSentence(idx) {
+            selectedIndex = idx;
+            document.querySelectorAll('.sentence-item').forEach((s, i) => {
+                s.classList.toggle('selected', i === idx);
+            });
+            document.getElementById('lock-btn').disabled = false;
+        }
+
+        function lockAnswer() {
+            const correct = GAME_DATA[currentRoundIndex].questions[currentQuestionIndex].text[selectedIndex].isH;
+            
+            globalStats.totalAttempts++;
+            roundStats.attempts++;
+            
+            const pop = document.getElementById('feedback-pop');
+            const text = document.getElementById('feedback-text');
+            pop.classList.remove('hidden');
+
+            if(correct) {
+                globalStats.score += 10;
+                globalStats.streak++;
+                globalStats.detected++;
+                globalStats.totalCorrect++;
+                roundStats.score += 10;
+                roundStats.correct++;
+                text.innerText = "CORRECT";
+                text.style.color = "var(--green)";
+            } else {
+                globalStats.streak = 0;
+                text.innerText = "INCORRECT";
+                text.style.color = "var(--magenta)";
+                document.getElementById('game-card').classList.add('shake');
+                setTimeout(() => document.getElementById('game-card').classList.remove('shake'), 500);
+            }
+
+            updateHUD();
+
+            setTimeout(() => {
+                pop.classList.add('hidden');
+                currentQuestionIndex++;
+                if(currentQuestionIndex < 5) {
+                    loadQuestion();
+                } else {
+                    showSummary();
+                }
+            }, 1000);
+        }
+
+        function updateHUD() {
+            document.getElementById('score').innerText = globalStats.score;
+            document.getElementById('streak').innerText = globalStats.streak;
+            document.getElementById('detected').innerText = globalStats.detected;
+            const acc = Math.round((globalStats.totalCorrect / globalStats.totalAttempts) * 100) || 0;
+            document.getElementById('accuracy').innerText = `${acc}%`;
+        }
+
+        function updateBoosterUI() {
+            document.getElementById('boost-scanner').disabled = boosters.scanner <= 0;
+            document.getElementById('boost-scanner').querySelector('span:last-child').innerText = `${boosters.scanner} LEFT`;
+            
+            document.getElementById('boost-fact').disabled = boosters.fact <= 0;
+            document.getElementById('boost-fact').querySelector('span:last-child').innerText = `${boosters.fact} LEFT`;
+
+            document.getElementById('boost-freeze').disabled = boosters.freeze <= 0;
+            document.getElementById('boost-freeze').querySelector('span:last-child').innerText = `${boosters.freeze} LEFT`;
+        }
+
+        function useScanner() {
+            if(boosters.scanner > 0) {
+                boosters.scanner--;
+                document.getElementById('content-area').classList.add('active-scan');
+                updateBoosterUI();
+            }
+        }
+
+        function useFactAmplifier() {
+            if(boosters.fact > 0) {
+                boosters.fact--;
+                const sentences = GAME_DATA[currentRoundIndex].questions[currentQuestionIndex].text;
+                let highest = 0, targetIdx = 0;
+                sentences.forEach((s, i) => { if(s.r > highest) { highest = s.r; targetIdx = i; } });
+                const el = document.querySelectorAll('.sentence-item')[targetIdx];
+                el.style.backgroundColor = "rgba(255, 0, 255, 0.3)";
+                el.style.border = "3px dashed var(--magenta)";
+                updateBoosterUI();
+            }
+        }
+
+        function useTimeFreeze() {
+            if(boosters.freeze > 0) {
+                boosters.freeze--;
+                document.body.style.filter = "invert(1) hue-rotate(180deg)";
+                setTimeout(() => { document.body.style.filter = ""; }, 2000);
+                updateBoosterUI();
+            }
+        }
+
+        function showSummary() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('summary-screen').classList.remove('hidden');
+            
+            document.getElementById('round-score').innerText = roundStats.score;
+            const acc = Math.round((roundStats.correct / roundStats.attempts) * 100) || 0;
+            document.getElementById('round-acc').innerText = `${acc}%`;
+            document.getElementById('round-detect').innerText = roundStats.correct;
+        }
+    </script>
+</body>
+</html>

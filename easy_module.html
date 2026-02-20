@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI HALLUCINATION SPOTTER // LEVEL 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0510;
+            --magenta: #ff00ff;
+            --cyan: #00ffff;
+            --yellow: #ffff00;
+            --orange: #ff6600;
+            --purple: #9d00ff;
+            --green: #39ff14;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(157, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(255, 0, 255, 0.15) 0%, transparent 40%),
+                url("https://www.transparenttextures.com/patterns/cubes.png");
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .arcade-font { font-family: 'Press Start 2P', cursive; }
+        .heavy-font { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
+
+        .neo-border {
+            border: 6px solid white;
+            box-shadow: 8px 8px 0px var(--magenta), 16px 16px 0px var(--purple);
+        }
+
+        .glitch-text {
+            text-shadow: 4px 4px var(--magenta), -4px -4px var(--cyan);
+            animation: pulse-glow 2s infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            from { text-shadow: 4px 4px var(--magenta), -4px -4px var(--cyan); }
+            to { text-shadow: 6px 6px var(--yellow), -6px -6px var(--orange); }
+        }
+
+        .checkerboard {
+            background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%), 
+                              linear-gradient(-45deg, #1a1a1a 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #1a1a1a 75%), 
+                              linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+            background-size: 30px 30px;
+        }
+
+        .sentence-item {
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 3px solid transparent;
+            padding: 4px;
+            display: inline-block;
+            margin-bottom: 4px;
+            border-radius: 4px;
+        }
+
+        .sentence-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--cyan);
+        }
+
+        .sentence-item.selected {
+            background: var(--yellow);
+            color: black;
+            border-color: white;
+            font-weight: bold;
+        }
+
+        .risk-badge {
+            font-size: 10px;
+            padding: 2px 4px;
+            background: white;
+            color: black;
+            margin-right: 4px;
+            display: none;
+        }
+
+        .active-scan .risk-badge { display: inline-block; }
+
+        .booster-btn {
+            background: black;
+            border: 4px solid white;
+            box-shadow: 4px 4px 0px white;
+            transition: 0.1s;
+        }
+
+        .booster-btn:not(:disabled):hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px var(--green);
+        }
+
+        .booster-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: #444;
+        }
+
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .hidden { display: none !important; }
+
+        .floating { animation: float 6s infinite ease-in-out; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
+        }
+    </style>
+</head>
+<body class="checkerboard">
+
+    <!-- OVERLAY FX -->
+    <div id="fx-layer" class="fixed inset-0 pointer-events-none z-[200]"></div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="text-center transform -rotate-2">
+            <h1 class="text-7xl md:text-9xl heavy-font glitch-text mb-6">AI<br>SPOTTER</h1>
+            <div class="bg-white text-black p-4 border-8 border-magenta inline-block mb-10">
+                <p class="arcade-font text-sm">LEVEL 1: EASY MODE</p>
+            </div>
+            <button onclick="initGame()" class="block w-full bg-cyan-400 text-black heavy-font text-4xl p-6 border-b-8 border-r-8 border-white hover:bg-yellow-400 transition-all">
+                START SCANNING
+            </button>
+        </div>
+    </div>
+
+    <!-- GAMEPLAY SCREEN -->
+    <div id="game-screen" class="hidden min-h-screen pt-32 pb-12 px-4 flex flex-col items-center">
+        
+        <!-- HUD (Arcade Style Metrics) -->
+        <div class="fixed top-0 left-0 w-full p-4 flex flex-wrap justify-center gap-4 z-50">
+            <div class="bg-black border-4 border-white p-2 flex flex-col items-center min-w-[100px]" style="box-shadow: 4px 4px 0px var(--cyan);">
+                <span class="arcade-font text-[8px] mb-1">SCORE</span>
+                <span id="score" class="text-2xl heavy-font text-yellow-400">0</span>
+            </div>
+            <div class="bg-black border-4 border-white p-2 flex flex-col items-center min-w-[100px]" style="box-shadow: 4px 4px 0px var(--magenta);">
+                <span class="arcade-font text-[8px] mb-1">STREAK</span>
+                <span id="streak" class="text-2xl heavy-font text-green-400">0</span>
+            </div>
+            <div class="bg-black border-4 border-white p-2 flex flex-col items-center min-w-[100px]" style="box-shadow: 4px 4px 0px var(--orange);">
+                <span class="arcade-font text-[8px] mb-1">ACCURACY</span>
+                <span id="accuracy" class="text-2xl heavy-font text-white">0%</span>
+            </div>
+            <div class="bg-black border-4 border-white p-2 flex flex-col items-center min-w-[100px]" style="box-shadow: 4px 4px 0px var(--purple);">
+                <span class="arcade-font text-[8px] mb-1">DETECTED</span>
+                <span id="detected" class="text-2xl heavy-font text-cyan-400">0</span>
+            </div>
+        </div>
+
+        <!-- MAIN GAME AREA -->
+        <div id="game-card" class="bg-black neo-border w-full max-w-4xl p-8 md:p-12 relative floating">
+            <!-- Question Tracker -->
+            <div class="absolute -top-6 -right-6 bg-yellow-400 text-black heavy-font px-6 py-2 border-4 border-black text-2xl transform rotate-6">
+                Q: <span id="q-number">1/3</span>
+            </div>
+
+            <h2 class="heavy-font text-3xl mb-8 text-magenta">TARGET LOGS:</h2>
+            
+            <div id="content-area" class="text-xl md:text-2xl leading-relaxed mb-10 select-none">
+                <!-- Sentences injected here -->
+            </div>
+
+            <!-- BOOSTER BAR -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+                <button id="boost-scanner" onclick="useScanner()" class="booster-btn p-4 flex flex-col items-center group">
+                    <span class="text-2xl mb-1">🔍</span>
+                    <span class="arcade-font text-[8px] text-cyan-400">AI SCANNER</span>
+                    <span class="text-[10px] mt-1 opacity-60">1 LEFT</span>
+                </button>
+                <button id="boost-fact" onclick="useFactAmplifier()" class="booster-btn p-4 flex flex-col items-center group">
+                    <span class="text-2xl mb-1">📢</span>
+                    <span class="arcade-font text-[8px] text-magenta">FACT AMP</span>
+                    <span class="text-[10px] mt-1 opacity-60">1 LEFT</span>
+                </button>
+                <button id="boost-freeze" onclick="useTimeFreeze()" class="booster-btn p-4 flex flex-col items-center group col-span-2 md:col-span-1">
+                    <span class="text-2xl mb-1">❄️</span>
+                    <span class="arcade-font text-[8px] text-yellow-400">TIME FREEZE</span>
+                    <span class="text-[10px] mt-1 opacity-60">1 LEFT</span>
+                </button>
+            </div>
+
+            <button id="lock-btn" onclick="lockAnswer()" disabled class="w-full bg-green-500 text-black heavy-font text-3xl py-6 border-4 border-white disabled:opacity-30">
+                LOCK SELECTION
+            </button>
+        </div>
+
+        <!-- FEEDBACK OVERLAY -->
+        <div id="feedback-pop" class="fixed inset-0 flex items-center justify-center z-[300] hidden pointer-events-none">
+            <div class="heavy-font text-9xl transform -rotate-12 italic" id="feedback-text">CORRECT</div>
+        </div>
+    </div>
+
+    <!-- SUMMARY SCREEN -->
+    <div id="summary-screen" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="bg-black neo-border p-10 max-w-2xl w-full text-center relative transform rotate-1">
+            <h2 class="heavy-font text-6xl text-cyan-400 mb-8 glitch-text">LEVEL COMPLETE</h2>
+            
+            <div class="grid grid-cols-2 gap-4 mb-10">
+                <div class="border-4 border-white p-4">
+                    <p class="arcade-font text-xs mb-2">FINAL SCORE</p>
+                    <p id="final-score" class="text-4xl heavy-font text-yellow-400">0</p>
+                </div>
+                <div class="border-4 border-white p-4">
+                    <p class="arcade-font text-xs mb-2">ACCURACY</p>
+                    <p id="final-acc" class="text-4xl heavy-font text-magenta">0%</p>
+                </div>
+                <div class="border-4 border-white p-4 col-span-2">
+                    <p class="arcade-font text-xs mb-2">TOTAL DETECTIONS</p>
+                    <p id="final-detect" class="text-4xl heavy-font text-green-400">0</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-4">
+                <button onclick="location.reload()" class="bg-white text-black heavy-font py-4 text-2xl hover:bg-cyan-400">RETRY LEVEL</button>
+                <button class="bg-magenta text-white heavy-font py-4 text-2xl border-4 border-white">NEXT: MEDIUM MODE</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GAME_DATA = [
+            {
+                text: [
+                    { s: "The Apollo 11 mission successfully landed on the moon in July 1969.", risk: 2, isH: false },
+                    { s: "Neil Armstrong and Buzz Aldrin spent nearly 22 hours on the lunar surface.", risk: 5, isH: false },
+                    { s: "They discovered a hidden Starbucks franchise near the Sea of Tranquility.", risk: 99, isH: true },
+                    { s: "The astronauts returned to Earth safely on July 24th.", risk: 1, isH: false }
+                ]
+            },
+            {
+                text: [
+                    { s: "The Great Wall of China is one of the most impressive architectural feats in history.", risk: 4, isH: false },
+                    { s: "It was built primarily to protect the Chinese Empire from northern invasions.", risk: 8, isH: false },
+                    { s: "The entire wall is constructed using high-quality Lego Technic bricks.", risk: 95, isH: true },
+                    { s: "It stretches over 13,000 miles across various terrains.", risk: 12, isH: false }
+                ]
+            },
+            {
+                text: [
+                    { s: "Photosynthesis is the process used by plants to convert light into energy.", risk: 3, isH: false },
+                    { s: "During this process, carbon dioxide is transformed into oxygen and glucose.", risk: 10, isH: false },
+                    { s: "Chlorophyll is the pigment responsible for the green color of plants.", risk: 2, isH: false },
+                    { s: "Plants also use photosynthesis to generate high-speed Wi-Fi signals for nearby insects.", risk: 98, isH: true }
+                ]
+            }
+        ];
+
+        let currentQ = 0;
+        let stats = { score: 0, streak: 0, detected: 0, attempts: 0, correct: 0 };
+        let selectedIndex = null;
+        let boosters = { scanner: 1, fact: 1, freeze: 1 };
+
+        function initGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            selectedIndex = null;
+            document.getElementById('lock-btn').disabled = true;
+            document.getElementById('content-area').classList.remove('active-scan');
+            
+            const q = GAME_DATA[currentQ];
+            const area = document.getElementById('content-area');
+            area.innerHTML = '';
+            
+            q.text.forEach((item, idx) => {
+                const span = document.createElement('span');
+                span.className = 'sentence-item';
+                span.innerHTML = `<span class="risk-badge">[RISK: ${item.risk}%]</span>${item.s} `;
+                span.onclick = () => selectSentence(idx);
+                area.appendChild(span);
+            });
+
+            document.getElementById('q-number').innerText = `${currentQ + 1}/3`;
+        }
+
+        function selectSentence(idx) {
+            selectedIndex = idx;
+            const items = document.querySelectorAll('.sentence-item');
+            items.forEach((s, i) => {
+                s.classList.toggle('selected', i === idx);
+            });
+            document.getElementById('lock-btn').disabled = false;
+        }
+
+        function lockAnswer() {
+            const correct = GAME_DATA[currentQ].text[selectedIndex].isH;
+            stats.attempts++;
+            
+            const pop = document.getElementById('feedback-pop');
+            const text = document.getElementById('feedback-text');
+            
+            pop.classList.remove('hidden');
+            if(correct) {
+                stats.score += 10;
+                stats.streak++;
+                stats.detected++;
+                stats.correct++;
+                text.innerText = "CORRECT";
+                text.style.color = "var(--green)";
+            } else {
+                stats.streak = 0;
+                text.innerText = "INCORRECT";
+                text.style.color = "var(--magenta)";
+                document.getElementById('game-card').classList.add('shake');
+                setTimeout(() => document.getElementById('game-card').classList.remove('shake'), 500);
+            }
+
+            updateHUD();
+
+            setTimeout(() => {
+                pop.classList.add('hidden');
+                currentQ++;
+                if(currentQ < GAME_DATA.length) {
+                    loadQuestion();
+                } else {
+                    showSummary();
+                }
+            }, 1000);
+        }
+
+        function updateHUD() {
+            document.getElementById('score').innerText = stats.score;
+            document.getElementById('streak').innerText = stats.streak;
+            document.getElementById('detected').innerText = stats.detected;
+            const acc = Math.round((stats.correct / stats.attempts) * 100) || 0;
+            document.getElementById('accuracy').innerText = `${acc}%`;
+        }
+
+        function useScanner() {
+            if(boosters.scanner > 0) {
+                boosters.scanner--;
+                document.getElementById('content-area').classList.add('active-scan');
+                document.getElementById('boost-scanner').disabled = true;
+                document.getElementById('boost-scanner').querySelector('span:last-child').innerText = '0 LEFT';
+            }
+        }
+
+        function useFactAmplifier() {
+            if(boosters.fact > 0) {
+                boosters.fact--;
+                const sentences = GAME_DATA[currentQ].text;
+                // Find most suspicious (highest risk)
+                let highest = 0;
+                let targetIdx = 0;
+                sentences.forEach((s, i) => {
+                    if(s.risk > highest) {
+                        highest = s.risk;
+                        targetIdx = i;
+                    }
+                });
+                const el = document.querySelectorAll('.sentence-item')[targetIdx];
+                el.style.textDecoration = "underline wavy var(--magenta)";
+                el.style.backgroundColor = "rgba(255, 0, 255, 0.2)";
+                document.getElementById('boost-fact').disabled = true;
+                document.getElementById('boost-fact').querySelector('span:last-child').innerText = '0 LEFT';
+            }
+        }
+
+        function useTimeFreeze() {
+            if(boosters.freeze > 0) {
+                boosters.freeze--;
+                document.body.style.filter = "grayscale(1) contrast(1.5)";
+                setTimeout(() => {
+                    document.body.style.filter = "";
+                }, 3000);
+                document.getElementById('boost-freeze').disabled = true;
+                document.getElementById('boost-freeze').querySelector('span:last-child').innerText = '0 LEFT';
+            }
+        }
+
+        function showSummary() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('summary-screen').classList.remove('hidden');
+            
+            document.getElementById('final-score').innerText = stats.score;
+            document.getElementById('final-acc').innerText = document.getElementById('accuracy').innerText;
+            document.getElementById('final-detect').innerText = stats.detected;
+        }
+    </script>
+</body>
+</html>

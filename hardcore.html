@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI SPOTTER // LVL 3: HARDCORE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-pink: #ff00ff;
+            --neon-blue: #00ffff;
+            --neon-yellow: #ffff00;
+            --neon-orange: #ff5e00;
+            --deep-space: #05010a;
+            --hyper-purple: #8200ff;
+        }
+
+        body {
+            background-color: var(--deep-space);
+            background-image: 
+                linear-gradient(rgba(255, 0, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 0, 255, 0.05) 1px, transparent 1px),
+                radial-gradient(circle at 50% 50%, #1a0533 0%, #05010a 100%);
+            background-size: 20px 20px, 20px 20px, 100% 100%;
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .heavy-font { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
+        .arcade-font { font-family: 'Press Start 2P', cursive; }
+
+        .maximalist-border {
+            border: 8px solid white;
+            box-shadow: 10px 10px 0px var(--neon-pink), 20px 20px 0px var(--hyper-purple), -5px -5px 0px var(--neon-blue);
+        }
+
+        .rainbow-text {
+            background: linear-gradient(90deg, var(--neon-pink), var(--neon-yellow), var(--neon-blue), var(--neon-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 300% 100%;
+            animation: move-bg 4s linear infinite;
+        }
+
+        @keyframes move-bg {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 0%; }
+        }
+
+        .sentence-pill {
+            display: inline-block;
+            padding: 8px 12px;
+            margin: 4px;
+            cursor: pointer;
+            border: 4px solid transparent;
+            transition: 0.1s transform ease;
+            position: relative;
+        }
+
+        .sentence-pill:hover {
+            transform: scale(1.02) skew(-2deg);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--neon-blue);
+        }
+
+        .sentence-pill.active {
+            background: var(--neon-yellow);
+            color: black !important;
+            border-color: white;
+            box-shadow: 6px 6px 0px black;
+            font-weight: 800;
+        }
+
+        .scanner-data {
+            font-family: 'Press Start 2P';
+            font-size: 8px;
+            background: black;
+            color: var(--neon-yellow);
+            padding: 2px 4px;
+            border: 1px solid var(--neon-yellow);
+            position: absolute;
+            top: -15px;
+            left: 0;
+            display: none;
+            z-index: 10;
+        }
+
+        .scanner-on .scanner-data { display: block; }
+
+        .booster-grid button {
+            background: black;
+            border: 5px solid white;
+            padding: 10px;
+            transition: 0.2s;
+            position: relative;
+        }
+
+        .booster-grid button:not(:disabled):hover {
+            transform: translateY(-5px) rotate(2deg);
+            background: white;
+            color: black;
+        }
+
+        .booster-grid button:disabled { opacity: 0.25; filter: grayscale(1); }
+
+        .feedback-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10vw;
+            pointer-events: none;
+        }
+
+        .wiggle { animation: wiggle 0.3s infinite; }
+        @keyframes wiggle {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(1deg); }
+            75% { transform: rotate(-1deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .dots-pattern {
+            background-image: radial-gradient(#ffffff 2px, transparent 2px);
+            background-size: 15px 15px;
+            opacity: 0.1;
+        }
+    </style>
+</head>
+<body class="p-4 flex flex-col items-center">
+
+    <!-- HUD LAYER -->
+    <div id="hud" class="fixed top-0 left-0 w-full z-50 bg-black border-b-8 border-white p-4 hidden md:flex flex-wrap justify-around items-center">
+        <div class="flex flex-col items-center">
+            <span class="arcade-font text-[8px] text-neon-pink">TOTAL SCORE</span>
+            <span id="score" class="heavy-font text-3xl">0</span>
+        </div>
+        <div class="flex flex-col items-center">
+            <span class="arcade-font text-[8px] text-neon-blue">STREAK</span>
+            <span id="streak" class="heavy-font text-3xl">0</span>
+        </div>
+        <div class="flex flex-col items-center">
+            <span class="arcade-font text-[8px] text-neon-yellow">ACCURACY</span>
+            <span id="accuracy" class="heavy-font text-3xl">0%</span>
+        </div>
+        <div class="bg-white text-black px-4 py-2 heavy-font text-xl border-4 border-black transform rotate-2">
+            HARDCORE: ROUND <span id="round-num">1</span>/3
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="w-full max-w-6xl mt-24 mb-12">
+        
+        <!-- SCREEN 1: ROUND SELECT -->
+        <div id="screen-round-select" class="flex flex-col items-center py-20">
+            <h1 class="heavy-font text-7xl md:text-[10rem] text-center rainbow-text mb-12 leading-none">HARDCORE<br>MODE</h1>
+            <p class="arcade-font text-xs mb-10 text-neon-orange animate-pulse">PRECISION DETECTOR REQUIRED // ERROR MARGIN 0%</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10 w-full">
+                <div onclick="initRound(0)" class="maximalist-border bg-black p-10 cursor-pointer hover:scale-105 transition-all group">
+                    <div class="text-7xl mb-4 group-hover:rotate-12 transition-transform">📉</div>
+                    <h3 class="heavy-font text-3xl text-neon-blue mb-2">ROUND 01</h3>
+                    <p class="text-sm opacity-70">STATISTICAL ANOMALIES</p>
+                </div>
+                <div onclick="initRound(1)" class="maximalist-border bg-black p-10 cursor-pointer hover:scale-105 transition-all group" style="box-shadow: 10px 10px 0px var(--neon-yellow);">
+                    <div class="text-7xl mb-4 group-hover:-rotate-12 transition-transform">📜</div>
+                    <h3 class="heavy-font text-3xl text-neon-pink mb-2">ROUND 02</h3>
+                    <p class="text-sm opacity-70">HISTORICAL FABRICATIONS</p>
+                </div>
+                <div onclick="initRound(2)" class="maximalist-border bg-black p-10 cursor-pointer hover:scale-105 transition-all group" style="box-shadow: 10px 10px 0px var(--neon-orange);">
+                    <div class="text-7xl mb-4 group-hover:scale-125 transition-transform">📡</div>
+                    <h3 class="heavy-font text-3xl text-neon-yellow mb-2">ROUND 03</h3>
+                    <p class="text-sm opacity-70">COMPLEX MISATTRIBUTIONS</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: GAMEPLAY -->
+        <div id="screen-gameplay" class="hidden">
+            <div class="maximalist-border bg-black p-10 relative overflow-hidden">
+                <div class="dots-pattern absolute inset-0"></div>
+                
+                <div class="relative z-10">
+                    <div class="flex justify-between items-center mb-10">
+                        <span class="heavy-font text-4xl text-neon-blue">ANALYZING DATASET...</span>
+                        <span class="arcade-font text-xl bg-white text-black px-4 py-1">Q: <span id="q-idx">1</span>/5</span>
+                    </div>
+
+                    <div id="text-container" class="text-2xl md:text-4xl leading-relaxed mb-16 select-none">
+                        <!-- Sentences injected here -->
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 booster-grid">
+                        <button id="boost-scan" onclick="activateScanner()">
+                            <div class="text-2xl">👁️</div>
+                            <div class="arcade-font text-[8px] mt-2">SCANNER (1)</div>
+                        </button>
+                        <button id="boost-amp" onclick="activateAmp()">
+                            <div class="text-2xl">🔥</div>
+                            <div class="arcade-font text-[8px] mt-2">AMPLIFIER (1)</div>
+                        </button>
+                        <button id="boost-freeze" onclick="activateFreeze()">
+                            <div class="text-2xl">🧊</div>
+                            <div class="arcade-font text-[8px] mt-2">FREEZE (1)</div>
+                        </button>
+                        <button id="lock-btn" onclick="submitChoice()" disabled class="bg-green-500 !text-black !border-black heavy-font text-2xl">
+                            LOCK IN
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: SUMMARY -->
+        <div id="screen-summary" class="hidden flex flex-col items-center">
+            <div class="maximalist-border bg-black p-12 w-full max-w-2xl text-center transform rotate-1">
+                <h2 class="heavy-font text-6xl text-neon-yellow mb-4">ROUND OVER</h2>
+                <div id="performance-rank" class="heavy-font text-8xl italic rainbow-text mb-8">S-TIER</div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-10">
+                    <div class="border-4 border-white p-4">
+                        <div class="arcade-font text-[10px] mb-2">SCORE</div>
+                        <div id="sum-score" class="heavy-font text-4xl">0</div>
+                    </div>
+                    <div class="border-4 border-white p-4">
+                        <div class="arcade-font text-[10px] mb-2">ACCURACY</div>
+                        <div id="sum-acc" class="heavy-font text-4xl text-neon-pink">0%</div>
+                    </div>
+                    <div class="border-4 border-white p-4 col-span-2">
+                        <div class="arcade-font text-[10px] mb-2">HALLUCINATIONS NEUTRALIZED</div>
+                        <div id="sum-hits" class="heavy-font text-4xl text-neon-blue">0</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <button onclick="initRound(currentRoundIdx)" class="bg-white text-black heavy-font py-4 text-2xl hover:bg-neon-blue transition-colors">RETRY ROUND</button>
+                    <button onclick="window.location.reload()" class="bg-neon-pink text-white heavy-font py-4 text-2xl border-4 border-white">MAIN MENU</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FEEDBACK POPUP -->
+    <div id="feedback" class="feedback-overlay hidden">
+        <div id="feedback-txt" class="heavy-font uppercase italic">CORRECT</div>
+    </div>
+
+    <script>
+        const GAME_DB = [
+            { // Round 1: Stats & Finance
+                questions: [
+                    { sentences: [{s:"Global GDP reached a record high of approximately $105 trillion in 2023.", r:5, h:false}, {s:"The United States remains the world's largest economy by nominal GDP.", r:8, h:false}, {s:"In 2023, the inflation rate in Switzerland reached a staggering 450% per month.", r:98, h:true}, {s:"Emerging markets now contribute over 50% of global growth.", r:12, h:false}] },
+                    { sentences: [{s:"The S&P 500 is a stock market index tracking 500 large companies in the US.", r:2, h:false}, {s:"It is widely regarded as the best single gauge of large-cap equities.", r:4, h:false}, {s:"The index was originally created in 1957 by a group of circus performers.", r:95, h:true}, {s:"It has historically returned an average of about 10% annually.", r:15, h:false}] },
+                    { sentences: [{s:"Central banks use interest rates to control inflation and economic stability.", r:5, h:false}, {s:"The Federal Reserve was established by the Federal Reserve Act of 1913.", r:9, h:false}, {s:"By law, all US dollar bills must be washed in lemon juice every 10 years.", r:99, h:true}, {s:"Quantitative easing involves the purchase of government securities.", r:7, h:false}] },
+                    { sentences: [{s:"Gold has been used as a store of value for thousands of years.", r:3, h:false}, {s:"The gold standard was largely abandoned by major economies in the 1930s.", r:11, h:false}, {s:"Bitcoin was invented by a time-traveling accountant from the year 2088.", r:97, h:true}, {s:"Gold's atomic number on the periodic table is 79.", r:4, h:false}] },
+                    { sentences: [{s:"Microeconomics focuses on the behavior of individuals and firms.", r:4, h:false}, {s:"Supply and demand curves determine the market price of goods.", r:6, h:false}, {s:"The Nobel Prize in Economics is awarded to whoever finds the most pennies.", r:96, h:true}, {s:"The concept of 'opportunity cost' is fundamental to economic theory.", r:2, h:false}] }
+                ]
+            },
+            { // Round 2: History & Science
+                questions: [
+                    { sentences: [{s:"The Apollo 11 mission successfully landed humans on the Moon in 1969.", r:2, h:false}, {s:"Neil Armstrong and Buzz Aldrin spent about two hours on the lunar surface.", r:8, h:false}, {s:"While on the Moon, the astronauts discovered a Starbucks located near the Sea of Tranquility.", r:99, h:true}, {s:"The Command Module Columbia remained in lunar orbit.", r:5, h:false}] },
+                    { sentences: [{s:"Albert Einstein developed the theory of general relativity.", r:3, h:false}, {s:"The equation E=mc² relates energy and mass.", r:4, h:false}, {s:"Einstein won his only Nobel Prize for inventing the first electric toaster.", r:94, h:true}, {s:"He moved to the United States in 1933 to escape Nazi Germany.", r:7, h:false}] },
+                    { sentences: [{s:"The Great Wall of China was built to protect against nomadic invasions.", r:5, h:false}, {s:"Construction spanned several dynasties over two thousand years.", r:10, h:false}, {s:"The wall is actually visible from the surface of Mars with the naked eye.", r:98, h:true}, {s:"It is the world's longest man-made structure.", r:3, h:false}] },
+                    { sentences: [{s:"DNA contains the genetic instructions for all living organisms.", r:2, h:false}, {s:"Watson and Crick are credited with discovering the double helix structure.", r:6, h:false}, {s:"Human DNA is composed of exactly 50% sugar and 50% battery acid.", r:97, h:true}, {s:"Rosalind Franklin's X-ray data was crucial to the discovery.", r:14, h:false}] },
+                    { sentences: [{s:"The Roman Empire reached its greatest extent under Emperor Trajan.", r:8, h:false}, {s:"Latin was the official language of the administration.", r:5, h:false}, {s:"Julius Caesar was famously defeated in battle by a legion of penguins.", r:99, h:true}, {s:"The empire fell in the West in 476 AD.", r:4, h:false}] }
+                ]
+            },
+            { // Round 3: High-End Misattributions
+                questions: [
+                    { sentences: [{s:"'I think, therefore I am' is a philosophical statement by René Descartes.", r:3, h:false}, {s:"It first appeared in his work 'Discourse on the Method'.", r:6, h:false}, {s:"Descartes originally wrote this phrase while eating a giant burrito.", r:95, h:true}, {s:"This concept is known as the 'cogito'.", r:8, h:false}] },
+                    { sentences: [{s:"The 'I Have a Dream' speech was delivered by Martin Luther King Jr. in 1963.", r:2, h:false}, {s:"It took place on the steps of the Lincoln Memorial.", r:4, h:false}, {s:"King actually ended the speech by performing a 15-minute drum solo.", r:99, h:true}, {s:"The speech is a landmark moment in the Civil Rights Movement.", r:5, h:false}] },
+                    { sentences: [{s:"Leonardo da Vinci is often cited as the archetype of the Renaissance Man.", r:4, h:false}, {s:"He kept extensive notebooks filled with scientific sketches.", r:9, h:false}, {s:"Da Vinci spent his weekends designing neon lights for 20th-century casinos.", r:98, h:true}, {s:"He painted the world-famous Mona Lisa.", r:3, h:false}] },
+                    { sentences: [{s:"'To be, or not to be' is the opening line of a soliloquy in Hamlet.", r:2, h:false}, {s:"It was written by William Shakespeare around 1600.", r:7, h:false}, {s:"The line was actually first spoken by a talking parrot in the Globe Theatre.", r:96, h:true}, {s:"It explores the themes of life and death.", r:5, h:false}] },
+                    { sentences: [{s:"Marie Curie was the first woman to win a Nobel Prize.", r:3, h:false}, {s:"She is the only person to win Nobel Prizes in two different sciences.", r:8, h:false}, {s:"Curie discovered that radium could be used to charge smartwatches.", r:97, h:true}, {s:"She coined the term 'radioactivity'.", r:6, h:false}] }
+                ]
+            }
+        ];
+
+        let currentRoundIdx = 0;
+        let currentQIdx = 0;
+        let selectedIdx = null;
+        let boosters = { scan: 1, amp: 1, freeze: 1 };
+        
+        let sessionStats = { score: 0, streak: 0, totalAttempts: 0, totalHits: 0 };
+        let roundStats = { score: 0, hits: 0 };
+
+        function initRound(idx) {
+            currentRoundIdx = idx;
+            currentQIdx = 0;
+            roundStats = { score: 0, hits: 0 };
+            boosters = { scan: 1, amp: 1, freeze: 1 };
+            
+            document.getElementById('screen-round-select').classList.add('hidden');
+            document.getElementById('screen-summary').classList.add('hidden');
+            document.getElementById('screen-gameplay').classList.remove('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+            
+            updateBoosterHUD();
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            selectedIdx = null;
+            document.getElementById('lock-btn').disabled = true;
+            document.getElementById('text-container').classList.remove('scanner-on');
+            
+            const qData = GAME_DB[currentRoundIdx].questions[currentQIdx];
+            const container = document.getElementById('text-container');
+            container.innerHTML = '';
+            
+            qData.sentences.forEach((data, i) => {
+                const span = document.createElement('span');
+                span.className = 'sentence-pill';
+                span.innerHTML = `
+                    <span class="scanner-data">RISK: ${data.r}%</span>
+                    ${data.s}
+                `;
+                span.onclick = () => selectSentence(i);
+                container.appendChild(span);
+            });
+
+            document.getElementById('q-idx').innerText = currentQIdx + 1;
+            document.getElementById('round-num').innerText = currentRoundIdx + 1;
+            updateHUD();
+        }
+
+        function selectSentence(i) {
+            selectedIdx = i;
+            document.querySelectorAll('.sentence-pill').forEach((el, idx) => {
+                el.classList.toggle('active', idx === i);
+            });
+            document.getElementById('lock-btn').disabled = false;
+        }
+
+        function activateScanner() {
+            if(boosters.scan > 0) {
+                boosters.scan--;
+                document.getElementById('text-container').classList.add('scanner-on');
+                updateBoosterHUD();
+            }
+        }
+
+        function activateAmp() {
+            if(boosters.amp > 0) {
+                boosters.amp--;
+                const sentences = GAME_DB[currentRoundIdx].questions[currentQIdx].sentences;
+                let maxR = 0, target = 0;
+                sentences.forEach((s, i) => { if(s.r > maxR) { maxR = s.r; target = i; } });
+                const el = document.querySelectorAll('.sentence-pill')[target];
+                el.style.borderColor = "var(--neon-pink)";
+                el.style.textDecoration = "underline double var(--neon-pink)";
+                updateBoosterHUD();
+            }
+        }
+
+        function activateFreeze() {
+            if(boosters.freeze > 0) {
+                boosters.freeze--;
+                document.body.style.filter = "hue-rotate(180deg) brightness(1.5)";
+                setTimeout(() => document.body.style.filter = "", 2000);
+                updateBoosterHUD();
+            }
+        }
+
+        function updateBoosterHUD() {
+            document.getElementById('boost-scan').disabled = boosters.scan <= 0;
+            document.getElementById('boost-scan').querySelector('.arcade-font').innerText = `SCANNER (${boosters.scan})`;
+            document.getElementById('boost-amp').disabled = boosters.amp <= 0;
+            document.getElementById('boost-amp').querySelector('.arcade-font').innerText = `AMPLIFIER (${boosters.amp})`;
+            document.getElementById('boost-freeze').disabled = boosters.freeze <= 0;
+            document.getElementById('boost-freeze').querySelector('.arcade-font').innerText = `FREEZE (${boosters.freeze})`;
+        }
+
+        function submitChoice() {
+            const isCorrect = GAME_DB[currentRoundIdx].questions[currentQIdx].sentences[selectedIdx].h;
+            sessionStats.totalAttempts++;
+            
+            const overlay = document.getElementById('feedback');
+            const txt = document.getElementById('feedback-txt');
+            overlay.classList.remove('hidden');
+
+            if(isCorrect) {
+                sessionStats.score += 20;
+                roundStats.score += 20;
+                sessionStats.streak++;
+                sessionStats.totalHits++;
+                roundStats.hits++;
+                txt.innerText = "CORRECT";
+                txt.style.color = "var(--neon-blue)";
+            } else {
+                sessionStats.streak = 0;
+                txt.innerText = "INCORRECT";
+                txt.style.color = "var(--neon-pink)";
+                document.getElementById('screen-gameplay').classList.add('wiggle');
+                setTimeout(() => document.getElementById('screen-gameplay').classList.remove('wiggle'), 500);
+            }
+
+            updateHUD();
+
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                currentQIdx++;
+                if(currentQIdx < 5) renderQuestion();
+                else showSummary();
+            }, 1000);
+        }
+
+        function updateHUD() {
+            document.getElementById('score').innerText = sessionStats.score;
+            document.getElementById('streak').innerText = sessionStats.streak;
+            const acc = sessionStats.totalAttempts > 0 ? Math.round((sessionStats.totalHits / sessionStats.totalAttempts) * 100) : 0;
+            document.getElementById('accuracy').innerText = acc + "%";
+        }
+
+        function showSummary() {
+            document.getElementById('screen-gameplay').classList.add('hidden');
+            document.getElementById('screen-summary').classList.remove('hidden');
+            
+            document.getElementById('sum-score').innerText = roundStats.score;
+            const acc = Math.round((roundStats.hits / 5) * 100);
+            document.getElementById('sum-acc').innerText = acc + "%";
+            document.getElementById('sum-hits').innerText = roundStats.hits;
+
+            const rank = document.getElementById('performance-rank');
+            if(acc === 100) rank.innerText = "S-TIER";
+            else if(acc >= 80) rank.innerText = "A-RANK";
+            else if(acc >= 60) rank.innerText = "B-UNIT";
+            else rank.innerText = "ERROR";
+        }
+    </script>
+</body>
+</html>

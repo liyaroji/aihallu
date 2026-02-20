@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI HALLUCINATION SPOTTER // ARCADE MODE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0510;
+            --magenta: #ff00ff;
+            --cyan: #00ffff;
+            --yellow: #ffff00;
+            --orange: #ff6600;
+            --purple: #9d00ff;
+            --green: #39ff14;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(157, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(255, 0, 255, 0.15) 0%, transparent 40%),
+                url("https://www.transparenttextures.com/patterns/cubes.png");
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        h1, h2, .huge-text {
+            font-family: 'Archivo Black', sans-serif;
+            text-transform: uppercase;
+        }
+
+        .arcade-font {
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .neo-border {
+            border: 6px solid white;
+            box-shadow: 8px 8px 0px var(--magenta), 16px 16px 0px var(--purple);
+        }
+
+        .glitch-text {
+            text-shadow: 4px 4px var(--magenta), -4px -4px var(--cyan);
+            animation: pulse-glow 2s infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            from { text-shadow: 4px 4px var(--magenta), -4px -4px var(--cyan); }
+            to { text-shadow: 6px 6px var(--yellow), -6px -6px var(--orange); }
+        }
+
+        .checkerboard {
+            background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%), 
+                              linear-gradient(-45deg, #1a1a1a 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #1a1a1a 75%), 
+                              linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+            background-size: 40px 40px;
+        }
+
+        .game-card {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            border: 8px solid white;
+            box-shadow: 12px 12px 0px var(--purple);
+            transform: rotate(-1deg);
+        }
+
+        .floating { animation: float 3s infinite ease-in-out; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .coin-anim {
+            animation: coin-pop 0.6s ease-out forwards;
+        }
+
+        @keyframes coin-pop {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .gradient-mesh {
+            background: mesh-gradient(at 20% 20%, #ff00ff, #00ffff, #ffff00); /* Note: Standard mesh isn't CSS yet, simulating with radials */
+            background: radial-gradient(circle at 0% 0%, var(--magenta) 0%, transparent 50%),
+                        radial-gradient(circle at 100% 0%, var(--cyan) 0%, transparent 50%),
+                        radial-gradient(circle at 100% 100%, var(--yellow) 0%, transparent 50%),
+                        radial-gradient(circle at 0% 100%, var(--purple) 0%, transparent 50%);
+        }
+
+        .option-btn {
+            transition: all 0.1s;
+            border: 4px solid white;
+            box-shadow: 4px 4px 0px white;
+        }
+
+        .option-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 8px 8px 0px var(--cyan);
+        }
+
+        .option-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px white;
+        }
+
+        .mario-pipe {
+            width: 80px;
+            height: 40px;
+            background: #2ecc71;
+            border: 4px solid black;
+            position: relative;
+        }
+
+        .mario-pipe::after {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 5px;
+            width: 70px;
+            height: 100px;
+            background: #27ae60;
+            border: 4px solid black;
+            border-top: none;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="checkerboard">
+
+    <!-- OVERLAY FX -->
+    <div id="fx-layer" class="fixed inset-0 pointer-events-none z-[200]"></div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen">
+        <header class="pt-16 pb-8 px-4 text-center relative overflow-hidden">
+            <div class="inline-block p-4 border-dashed border-4 border-yellow-400 transform rotate-1 mb-6 bg-black">
+                <span class="text-yellow-400 font-bold tracking-widest text-xl arcade-font">INSERT COIN TO START</span>
+            </div>
+            <h1 class="text-6xl md:text-9xl glitch-text mb-4 leading-none">
+                AI <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-magenta via-cyan to-yellow" style="background-image: linear-gradient(90deg, #ff00ff, #00ffff, #ffff00);">SPOTTER</span>
+            </h1>
+            <p class="text-xl md:text-2xl font-bold max-w-2xl mx-auto bg-black border-2 border-white inline-block px-4 py-2 mt-4 transform -rotate-1">
+                SPOT THE LIES. WIN THE PRIZE.
+            </p>
+        </header>
+
+        <main class="container mx-auto px-4 py-12 relative">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-6xl mx-auto">
+                <!-- Level Cards -->
+                <div onclick="startGame('easy')" class="group cursor-pointer neo-border bg-black p-8 flex flex-col items-center relative overflow-hidden" style="box-shadow: 8px 8px 0px var(--cyan);">
+                    <div class="text-7xl mb-4 group-hover:scale-125 transition-transform">🍄</div>
+                    <h2 class="text-4xl text-cyan-400">EASY</h2>
+                    <p class="text-center text-sm opacity-80 mt-2">Level 1-1: Slow Bots</p>
+                </div>
+                <div onclick="startGame('medium')" class="group cursor-pointer neo-border bg-black p-8 flex flex-col items-center relative overflow-hidden" style="box-shadow: 8px 8px 0px var(--yellow);">
+                    <div class="text-7xl mb-4 group-hover:scale-125 transition-transform">⭐</div>
+                    <h2 class="text-4xl text-yellow-400">MEDIUM</h2>
+                    <p class="text-center text-sm opacity-80 mt-2">Level 2-1: Smart Algos</p>
+                </div>
+                <div onclick="startGame('hard')" class="group cursor-pointer neo-border bg-black p-8 flex flex-col items-center relative overflow-hidden" style="box-shadow: 8px 8px 0px var(--magenta);">
+                    <div class="text-7xl mb-4 group-hover:scale-125 transition-transform">🔥</div>
+                    <h2 class="text-4xl text-magenta">HARD</h2>
+                    <p class="text-center text-sm opacity-80 mt-2">Final Boss: Gaslighter</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- GAMEPLAY SCREEN -->
+    <div id="game-screen" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
+        
+        <!-- HUD -->
+        <div class="fixed top-0 left-0 w-full p-6 flex justify-between items-start z-50">
+            <div class="bg-black border-4 border-white p-4 neo-border" style="box-shadow: 6px 6px 0px var(--cyan);">
+                <div class="arcade-font text-xs mb-2">SCORE</div>
+                <div id="score-display" class="arcade-font text-2xl text-yellow-400">000000</div>
+            </div>
+            
+            <div class="flex flex-col items-end gap-2">
+                <div class="bg-black border-4 border-white p-4 flex gap-2" style="box-shadow: -6px 6px 0px var(--magenta);">
+                    <div id="hearts" class="flex gap-1 text-2xl">❤️❤️❤️</div>
+                </div>
+                <div id="level-tag" class="bg-yellow-400 text-black px-4 py-1 font-black arcade-font text-[10px]">WORLD 1-1</div>
+            </div>
+        </div>
+
+        <!-- Question Container -->
+        <div id="question-container" class="game-card w-full max-w-3xl p-8 relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-2 opacity-20 text-4xl font-black">? ? ?</div>
+            
+            <div class="mb-8">
+                <span class="bg-magenta text-white px-2 py-1 text-xs font-bold uppercase mb-2 inline-block">Transmission Received:</span>
+                <h3 id="question-text" class="text-2xl md:text-4xl font-bold leading-tight uppercase">
+                    Loading AI nonsense...
+                </h3>
+            </div>
+
+            <div id="options-grid" class="grid grid-cols-1 gap-4">
+                <!-- Options will be injected here -->
+            </div>
+
+            <!-- Progress -->
+            <div class="mt-8 flex items-center gap-4">
+                <div class="flex-1 h-6 border-4 border-white bg-gray-900 relative">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-400 to-purple-600 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div id="progress-text" class="arcade-font text-[10px]">Q: 1/5</div>
+            </div>
+        </div>
+
+        <!-- Decorative Mario Pipe -->
+        <div class="fixed bottom-0 left-10 hidden md:block">
+            <div class="mario-pipe"></div>
+        </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="result-screen" class="hidden min-h-screen flex flex-col items-center justify-center p-4 text-center">
+        <div class="gradient-mesh p-12 neo-border max-w-2xl transform rotate-2">
+            <h2 id="result-title" class="text-7xl font-black italic mb-4 glitch-text">GAME OVER</h2>
+            <div class="bg-black p-6 border-4 border-white mb-8">
+                <p class="arcade-font text-sm mb-4">FINAL SCORE</p>
+                <p id="final-score" class="text-6xl font-black text-yellow-400">0</p>
+            </div>
+            <button onclick="location.reload()" class="bg-white text-black font-black px-12 py-6 text-3xl border-b-8 border-r-8 border-purple-600 hover:bg-cyan-400 transition-all transform hover:-translate-y-1 active:translate-y-1">
+                PLAY AGAIN?
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const QUESTIONS = {
+            easy: [
+                { q: "Is it true that the first man on the moon was Albert Einstein?", options: ["Yes, he used relativity", "No, it was Neil Armstrong", "Wait, Einstein was a cat?"], correct: 1 },
+                { q: "Which of these is a real color of a common banana?", options: ["Electric Blue", "Neon Magenta", "Yellow"], correct: 2 },
+                { q: "The capital of France is Mars. Correct?", options: ["No, it's Paris", "Yes, obviously", "France doesn't exist"], correct: 0 }
+            ],
+            medium: [
+                { q: "Which AI model famously said eating glue helps pizza stick better?", options: ["GPT-4", "Google Search Snippet", "Siri"], correct: 1 },
+                { q: "Does the Great Wall of China contain marshmallows?", options: ["Only in the summer", "No, just stone/brick", "Only the north part"], correct: 1 },
+                { q: "Who is the CEO of Apple?", options: ["Tim Cook", "Steve Jobs (Ghost version)", "Bill Gates"], correct: 0 }
+            ],
+            hard: [
+                { q: "Which historical figure was born in 2024?", options: ["Napoleon", "Abraham Lincoln", "None of them"], correct: 2 },
+                { q: "What is the square root of a Hallucination?", options: ["The letter B", "42", "It's a logical error"], correct: 2 },
+                { q: "Can a large language model feel the warmth of the sun?", options: ["Yes, on its GPU", "No, it's code", "Only during updates"], correct: 1 }
+            ]
+        };
+
+        let currentLevel = 'easy';
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let lives = 3;
+        let gameActive = false;
+
+        function startGame(level) {
+            currentLevel = level;
+            currentQuestionIndex = 0;
+            score = 0;
+            lives = 3;
+            gameActive = true;
+            
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('level-tag').innerText = `WORLD: ${level.toUpperCase()}`;
+            
+            updateHUD();
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const pool = QUESTIONS[currentLevel];
+            if (currentQuestionIndex >= pool.length) {
+                endGame(true);
+                return;
+            }
+
+            const data = pool[currentQuestionIndex];
+            const qText = document.getElementById('question-text');
+            const optionsGrid = document.getElementById('options-grid');
+            const progress = document.getElementById('progress-bar');
+            const progText = document.getElementById('progress-text');
+
+            // Set content
+            qText.innerText = data.q;
+            optionsGrid.innerHTML = '';
+            
+            data.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn bg-black text-left p-6 text-xl font-bold flex items-center gap-4 hover:bg-white hover:text-black transition-all";
+                btn.innerHTML = `<span class="bg-white text-black w-8 h-8 flex items-center justify-center arcade-font text-xs">${String.fromCharCode(65 + idx)}</span> ${opt}`;
+                btn.onclick = () => handleAnswer(idx);
+                optionsGrid.appendChild(btn);
+            });
+
+            // Update progress
+            const perc = (currentQuestionIndex / pool.length) * 100;
+            progress.style.width = `${perc}%`;
+            progText.innerText = `Q: ${currentQuestionIndex + 1}/${pool.length}`;
+            
+            // Entrance anim
+            const container = document.getElementById('question-container');
+            container.classList.remove('shake');
+            void container.offsetWidth; // trigger reflow
+            container.classList.add('floating');
+        }
+
+        function handleAnswer(index) {
+            const data = QUESTIONS[currentLevel][currentQuestionIndex];
+            const isCorrect = index === data.correct;
+
+            if (isCorrect) {
+                spawnCoin();
+                score += 1000;
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                lives--;
+                triggerShake();
+                if (lives <= 0) {
+                    endGame(false);
+                } else {
+                    currentQuestionIndex++;
+                    renderQuestion();
+                }
+            }
+            updateHUD();
+        }
+
+        function spawnCoin() {
+            const fx = document.getElementById('fx-layer');
+            const coin = document.createElement('div');
+            coin.className = "fixed text-6xl coin-anim z-[300]";
+            coin.style.left = "50%";
+            coin.style.top = "50%";
+            coin.innerText = "💰";
+            fx.appendChild(coin);
+            setTimeout(() => coin.remove(), 600);
+        }
+
+        function triggerShake() {
+            const container = document.getElementById('question-container');
+            container.classList.add('shake');
+            document.body.style.backgroundColor = "#ff0000";
+            setTimeout(() => {
+                document.body.style.backgroundColor = "";
+            }, 100);
+        }
+
+        function updateHUD() {
+            document.getElementById('score-display').innerText = score.toString().padStart(6, '0');
+            document.getElementById('hearts').innerText = "❤️".repeat(lives);
+        }
+
+        function endGame(won) {
+            gameActive = false;
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('result-title').innerText = won ? "LEVEL CLEARED" : "GAME OVER";
+        }
+    </script>
+</body>
+</html>
