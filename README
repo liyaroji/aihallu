@@ -27,7 +27,10 @@ AI Hallucination Spotter is an interactive educational game that trains users to
 As generative AI tools become widely used in education, research, and daily life, users increasingly rely on AI-generated content. However, AI systems can produce confident but incorrect information, known as hallucinations. Many users lack the skills to identify these inaccuracies, leading to misinformation spread and poor decision-making.
 
 ### The Solution
-[How are you solving it?]
+The project provides a gamified learning environment that bridges the gap between AI consumption and critical evaluation. It solves the problem of "blind trust" through three core pillars:
+•	Active Engagement (The Spotter Mechanic): Unlike passive reading, the game forces users to scrutinize every sentence. By searching for a specific "glitch," users develop a "skeptic’s eye" for AI-generated text.
+•	Pattern Recognition Training: The game categorizes hallucinations into specific types (e.g., Temporal Errors, Statistical Fabrications, or Logical Inconsistencies). This teaches users the "signatures" of AI failure.
+
 
 ---
 
@@ -36,25 +39,33 @@ As generative AI tools become widely used in education, research, and daily life
 ### Technologies/Components Used
 
 **For Software:**
-- Languages used: [e.g., JavaScript, Python, Java]
-- Frameworks used: [e.g., React, Django, Spring Boot]
-- Libraries used: [e.g., axios, pandas, JUnit]
-- Tools used: [e.g., VS Code, Git, Docker]
+- Languages used: 
+HTML5: To structure the game interface and content.
+CSS3: For the visual design, animations, and responsive layout.
+JavaScript (ES6+): To handle the game logic, user interactions, and state management.
+- Frameworks used: Vanilla JS (No Framework): To keep the application lightweight and highly performant.
+- Libraries used: Typed.js (Optional suggestion): Often used in these games to simulate the "AI typing" effect
+- Tools used:  VS Code, Git
 
-**For Hardware:**
-- Main components: [List main components]
-- Specifications: [Technical specifications]
-- Tools required: [List tools needed]
 
 ---
 
 ## Features
 
-List the key features of your project:
-- Feature 1: [Description]
-- Feature 2: [Description]
-- Feature 3: [Description]
-- Feature 4: [Description]
+Feature 1: Interactive Hallucination Detection
+A dynamic text interface where users can hover over or click individual sentences within a paragraph to "call out" potential AI errors. This simulates real-world fact-checking behavior.
+
+Feature 2: Diverse Hallucination Categories
+The game logic draws from a JavaScript-based dataset containing various error types, such as Temporal Errors (wrong dates), Statistical Fabrications (fake numbers), and Misattributed Facts (wrong people/places).
+
+Feature 3: Real-Time Feedback & Detailed Debunking
+Upon selecting a sentence, the system provides instant visual feedback (Green for correct, Red for incorrect) alongside a "Truth Card" that explains exactly why the hallucinated sentence was false.
+
+Feature 4: Dynamic Randomized Gameplay
+Uses JavaScript logic to shuffle the dataset and present different challenges each session, ensuring that the learning experience remains fresh and repeatable for the user.
+
+Feature 5: Responsive Progress Dashboard
+A lightweight scoring system built with CSS and JS that tracks the user's "Accuracy Rating" and "Detection Speed," motivating them to improve their critical thinking skills over time.
 
 ---
 
@@ -63,24 +74,8 @@ List the key features of your project:
 ### For Software:
 
 #### Installation
-```bash
-[Installation commands - e.g., npm install, pip install -r requirements.txt]
-```
+To run this project locally, you simply need a web browser. No external dependencies are required.
 
-#### Run
-```bash
-[Run commands - e.g., npm start, python app.py]
-```
-
-### For Hardware:
-
-#### Components Required
-[List all components needed with specifications]
-
-#### Circuit Setup
-[Explain how to set up the circuit]
-
----
 
 ## Project Documentation
 
@@ -88,7 +83,7 @@ List the key features of your project:
 
 #### Screenshots (Add at least 3)
 
-![Screenshot1](Add screenshot 1 here with proper name)
+
 *Add caption explaining what this shows*
 
 ![Screenshot2](Add screenshot 2 here with proper name)
