@@ -84,15 +84,15 @@ To run this project locally, you simply need a web browser. No external dependen
 #### Screenshots (Add at least 3)
 
 *Add caption explaining what this shows*
+ 
+![Home screen](ss1.png)
+*Caption: Main selection and intro screen*
 
-![ss1](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
+![Gameplay sample](ss2.png)
+*Caption: Example round where the user identifies a hallucinated sentence*
 
-![ss2](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
-
-![ss3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
+![Results screen](ss3.png)
+*Caption: Post-round feedback and score summary*
 #### Diagrams
 
 **System Architecture:**
@@ -135,8 +135,8 @@ To run this project locally, you simply need a web browser. No external dependen
 
 **Application Workflow:**
 
-![Workflow](docs/workflow.png)
-*Add caption explaining your workflow*
+![Application workflow](wf.png)
+*Caption: High-level application flow diagram*
 
 ---
 
@@ -189,7 +189,7 @@ To run this project locally, you simply need a web browser. No external dependen
 
 #### App Flow Diagram
 
-![App Flow](docs/app-flow.png)
+![App Flow](wf.png)
 *Explain the user flow through your application*
 
 #### Installation Guide
