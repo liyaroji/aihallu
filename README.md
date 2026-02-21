@@ -97,26 +97,27 @@ A lightweight, browser-based scoring system tracks the user's "Detection Accurac
 
 #### Screenshots (Add at least 3)
 
-![ss1.png](Add screenshot 1 here with proper name)
-*Add caption explaining what this shows*
+![Home screen](ss1.png)
+*Caption: Main selection and intro screen*
 
-![ss2.png](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
+![Gameplay sample](ss2.png)
+*Caption: Example round where the user identifies a hallucinated sentence*
 
-![ss3.png](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
+![Results screen](ss3.png)
+*Caption: Post-round feedback and score summary*
 
 #### Diagrams
 
 **System Architecture:**
 
-![arc.png](docs/architecture.png)
+![Architecture](arc.png)
+*Caption: System architecture overview*
 *Explain your system architecture - components, data flow, tech stack interaction*
 
 **Application Workflow:**
 
-![wf.png](docs/workflow.png)
-*Add caption explaining your workflow*
+![Application workflow](wf.png)
+*Caption: High-level application flow diagram*
 
 ---
 
@@ -124,19 +125,18 @@ A lightweight, browser-based scoring system tracks the user's "Detection Accurac
 
 #### Schematic & Circuit
 
-![Circuit](Add your circuit diagram here)
+![Circuit diagram](arc.png)
 *Add caption explaining connections*
 
-![Schematic](Add your schematic diagram here)
+![Schematic](wf.png)
 *Add caption explaining the schematic*
 
 #### Build Photos
 
-![teamphoto.jepg](Add photo of your team here)
+![Team photo](teamphoto.jpeg)
+*Caption: Project team*
 
-
-
-![ss1.png](Add photo of final product here)
+![Final product](img.png)
 *Explain the final build*
 
 ---
@@ -189,7 +189,7 @@ A lightweight, browser-based scoring system tracks the user's "Detection Accurac
 
 #### App Flow Diagram
 
-![App Flow](docs/app-flow.png)
+![App Flow](wf.png)
 *Explain the user flow through your application*
 
 #### Installation Guide
@@ -246,14 +246,14 @@ xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug
 1. Gather all components listed in the BOM
 2. Check component specifications
 3. Prepare your workspace
-![Step 1](images/assembly-step1.jpg)
+![Step 1](ss1.png)
 *Caption: All components laid out*
 
 **Step 2: Build the Power Supply**
 1. Connect the power rails on the breadboard
 2. Connect Arduino 5V to breadboard positive rail
 3. Connect Arduino GND to breadboard negative rail
-![Step 2](images/assembly-step2.jpg)
+![Step 2](ss2.png)
 *Caption: Power connections completed*
 
 **Step 3: Add Components**
@@ -261,13 +261,13 @@ xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug
 2. Connect resistors in series with LEDs
 3. Connect LED cathodes to GND
 4. Connect LED anodes to Arduino digital pins (2-6)
-![Step 3](images/assembly-step3.jpg)
+![Step 3](ss3.png)
 *Caption: LED circuit assembled*
 
 **Step 4: [Continue for all steps...]**
 
 **Final Assembly:**
-![Final Build](images/final-build.jpg)
+![Final Build](img.png)
 *Caption: Completed project ready for testing*
 
 ---
