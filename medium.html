@@ -130,11 +130,14 @@
             box-shadow: 16px 16px 0px var(--green);
             background: var(--purple);
         }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1a1a1a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--magenta); }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <!-- 1. START SCREEN -->
     <div id="start-view" class="min-h-screen flex flex-col items-center justify-center">
         <h1 class="heavy-font glitch-title text-center mb-8">MEDIUM<br>LEVEL</h1>
         <div class="bg-yellow-400 text-black px-8 py-2 heavy-font text-2xl mb-12 transform -rotate-3 border-4 border-black">
@@ -143,7 +146,6 @@
         <button onclick="showRoundMenu()" class="round-btn px-12 py-6 heavy-font text-4xl">ENTER SELECTION</button>
     </div>
 
-    <!-- 2. ROUND MENU -->
     <div id="round-menu" class="hidden min-h-screen flex flex-col items-center justify-center">
         <h2 class="heavy-font text-5xl mb-12 text-cyan-400">CHOOSE YOUR DATASET</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
@@ -165,9 +167,7 @@
         </div>
     </div>
 
-    <!-- 3. GAMEPLAY -->
     <div id="game-view" class="hidden min-h-screen pt-32">
-        <!-- TOP HUD -->
         <div class="fixed top-0 left-0 w-full p-4 flex flex-wrap justify-center gap-4 z-[100] bg-black border-b-8 border-white">
             <div class="bg-black border-4 border-white p-2 min-w-[100px] text-center" style="box-shadow: 4px 4px 0px var(--cyan);">
                 <div class="arcade-font text-[8px] mb-1">SCORE</div>
@@ -192,11 +192,8 @@
                     QUESTION <span id="q-count">1/5</span>
                 </div>
 
-                <div id="content-box" class="text-2xl md:text-3xl leading-snug mb-12">
-                    <!-- Sentences Injected Here -->
-                </div>
+                <div id="content-box" class="text-2xl md:text-3xl leading-snug mb-12"></div>
 
-                <!-- BOOSTERS -->
                 <div class="grid grid-cols-3 gap-4 mb-10">
                     <button id="btn-scan" onclick="boostScanner()" class="booster-slot p-4 flex flex-col items-center">
                         <span class="text-3xl mb-1">🔍</span>
@@ -222,7 +219,6 @@
         </div>
     </div>
 
-    <!-- 4. ROUND SUMMARY -->
     <div id="summary-view" class="hidden min-h-screen flex items-center justify-center">
         <div class="neo-panel p-12 max-w-2xl w-full text-center">
             <h2 class="heavy-font text-6xl text-yellow-400 mb-8">ROUND CLEAR</h2>
@@ -238,56 +234,223 @@
             </div>
             <div class="flex flex-col gap-4">
                 <button onclick="startRound(currentRoundIndex)" class="bg-white text-black heavy-font text-2xl py-4 hover:bg-cyan-400">RETRY ROUND</button>
+                <button onclick="toggleReview()" class="bg-cyan-600 text-white heavy-font text-2xl py-4 border-4 border-white mb-2">REVIEW LOGS</button>
+                
+                <div id="review-box" class="hidden mt-2 text-left border-t-4 border-white pt-6 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    <h3 class="arcade-font text-sm text-cyan-400 mb-4">NEURAL_LOG_ANALYSIS</h3>
+                    <div id="review-content" class="space-y-4"></div>
+                </div>
+
                 <button onclick="showRoundMenu()" class="bg-magenta text-white heavy-font text-2xl py-4 border-4 border-white">BACK TO MENU</button>
             </div>
         </div>
     </div>
 
-    <!-- Feedback Layer -->
     <div id="feedback-layer" class="feedback-flash hidden">
         <span id="feedback-txt" class="heavy-font italic"></span>
     </div>
 
     <script>
+        // --- DATA ADAPTER ---
+        function generateDynamicRounds(questionsPerRound = 5) {
+            const shuffled = [...DATASET].sort(() => 0.5 - Math.random());
+            const rounds = [];
+            for (let i = 0; i < 3; i++) {
+                const roundQuestions = shuffled.slice(i * questionsPerRound, (i + 1) * questionsPerRound)
+                    .map(q => {
+                        const sentences = q.paragraph.match(/[^.!?]+[.!?]+/g) || [q.paragraph];
+                        return {
+                            text: sentences.map((s, index) => {
+                                const isHallucination = index === q.correctIndex;
+                                return {
+                                    s: s.trim(),
+                                    h: isHallucination,
+                                    r: isHallucination ? Math.floor(Math.random() * 31) + 65 : Math.floor(Math.random() * 30) + 10
+                                };
+                            }),
+                            details: {
+                                explanation: q.explanation,
+                                why: q.whyHallucinated,
+                                flags: q.suspicionFlags,
+                                correctInfo: q.correctInfo
+                            }
+                        };
+                    });
+                rounds.push({ questions: roundQuestions });
+            }
+            return rounds;
+        }
 
-    // 1. DATA ADAPTER: Convert master DATASET to the format needed for Medium Mode
-    function generateDynamicRounds(questionsPerRound = 5) {
-        // Shuffle the master DATASET from dataset.js
-        const shuffled = [...DATASET].sort(() => 0.5 - Math.random());
-        
-        const rounds = [];
-        for (let i = 0; i < 3; i++) { // Creating 3 rounds
-            const roundQuestions = shuffled.slice(i * questionsPerRound, (i + 1) * questionsPerRound)
-                .map(q => {
-                    // Split paragraph into sentences for the Medium module's node system
-                    const sentences = q.paragraph.match(/[^.!?]+[.!?]+/g) || [q.paragraph];
-                    
-                    return {
-                        text: sentences.map((s, index) => {
-                            const isHallucination = index === q.correctIndex;
-                            return {
-                                s: s.trim(),
-                                h: isHallucination,
-                                // Generate a "Risk %" for the Scanner booster
-                                r: isHallucination ? Math.floor(Math.random() * 31) + 60 : Math.floor(Math.random() * 30) + 5
-                            };
-                        })
-                    };
-                });
+        // --- GAME STATE ---
+        let currentRoundIndex = 0;
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let streak = 0;
+        let totalAttempts = 0;
+        let correctHits = 0;
+        let selectedSentenceIndex = null;
+        let boosters = { scan: 1, amp: 1, freeze: 1 };
+        const GAME_DATA = generateDynamicRounds(5);
+
+        // --- NAVIGATION ---
+        function showRoundMenu() {
+            document.getElementById('start-view').classList.add('hidden');
+            document.getElementById('summary-view').classList.add('hidden');
+            document.getElementById('round-menu').classList.remove('hidden');
+        }
+
+        function startRound(index) {
+            currentRoundIndex = index;
+            currentQuestionIndex = 0;
+            boosters = { scan: 1, amp: 1, freeze: 1 };
+            updateBoosterUI();
+            document.getElementById('round-menu').classList.add('hidden');
+            document.getElementById('game-view').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        // --- CORE GAMEPLAY ---
+        function loadQuestion() {
+            selectedSentenceIndex = null;
+            document.getElementById('lock-btn').disabled = true;
+            document.getElementById('content-box').classList.remove('scanner-active');
             
-            rounds.push({
-                roundTitle: `ROUND ${i + 1}`,
-                questions: roundQuestions
+            const round = GAME_DATA[currentRoundIndex];
+            const question = round.questions[currentQuestionIndex];
+            
+            document.getElementById('q-count').innerText = `${currentQuestionIndex + 1}/${round.questions.length}`;
+            document.getElementById('hud-round').innerText = `ROUND ${currentRoundIndex + 1} OF 3`;
+            
+            const contentBox = document.getElementById('content-box');
+            contentBox.innerHTML = ''; 
+
+            question.text.forEach((item, index) => {
+                const span = document.createElement('span');
+                span.className = 'sentence-node';
+                span.innerHTML = `<span class="risk-tag">RISK: ${item.r}%</span>${item.s}`;
+                span.onclick = () => selectSentence(index);
+                contentBox.appendChild(span);
             });
         }
-        return rounds;
-    }
 
-    // Initialize Game Data
-    const GAME_DATA = generateDynamicRounds(5); 
+        function selectSentence(index) {
+            selectedSentenceIndex = index;
+            document.querySelectorAll('.sentence-node').forEach((node, i) => {
+                node.classList.toggle('selected', i === index);
+            });
+            document.getElementById('lock-btn').disabled = false;
+        }
 
-    // ... [Rest of your existing game logic variables and functions: currentRoundIndex, score, loadQuestion, etc.]
+        function submitAnswer() {
+            const question = GAME_DATA[currentRoundIndex].questions[currentQuestionIndex];
+            const isCorrect = question.text[selectedSentenceIndex].h === true;
+            
+            totalAttempts++;
+            if (isCorrect) {
+                score += 15; streak++; correctHits++;
+                showFeedback("NEURAL HIT", "var(--green)");
+            } else {
+                streak = 0;
+                showFeedback("SYSTEM GLITCH", "var(--magenta)");
+            }
+            
+            updateHUD();
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < GAME_DATA[currentRoundIndex].questions.length) {
+                    loadQuestion();
+                } else {
+                    showSummary();
+                }
+            }, 1200);
+        }
 
+        // --- BOOSTERS ---
+        function boostScanner() {
+            if (boosters.scan > 0) {
+                boosters.scan--;
+                document.getElementById('content-box').classList.add('scanner-active');
+                updateBoosterUI();
+            }
+        }
+
+        function boostAmp() {
+            if (boosters.amp > 0) {
+                boosters.amp--;
+                const question = GAME_DATA[currentRoundIndex].questions[currentQuestionIndex];
+                document.querySelectorAll('.sentence-node').forEach((node, idx) => {
+                    if (question.text[idx].h) node.style.borderColor = "var(--yellow)";
+                });
+                updateBoosterUI();
+            }
+        }
+
+        function boostFreeze() {
+            if (boosters.freeze > 0) {
+                boosters.freeze--;
+                document.body.style.filter = "hue-rotate(90deg) saturate(2)";
+                setTimeout(() => document.body.style.filter = "", 1500);
+                updateBoosterUI();
+            }
+        }
+
+        // --- HELPERS ---
+        function updateHUD() {
+            document.getElementById('hud-score').innerText = score;
+            document.getElementById('hud-streak').innerText = streak;
+            const acc = Math.round((correctHits / totalAttempts) * 100) || 0;
+            document.getElementById('hud-acc').innerText = acc + "%";
+        }
+
+        function updateBoosterUI() {
+            ['scan', 'amp', 'freeze'].forEach(b => {
+                document.getElementById(`count-${b}`).innerText = `${boosters[b]} LEFT`;
+                document.getElementById(`btn-${b}`).disabled = boosters[b] <= 0;
+            });
+        }
+
+        function showFeedback(txt, color) {
+            const layer = document.getElementById('feedback-layer');
+            const span = document.getElementById('feedback-txt');
+            span.innerText = txt;
+            span.style.color = color;
+            layer.classList.remove('hidden');
+            setTimeout(() => layer.classList.add('hidden'), 1000);
+        }
+
+        function showSummary() {
+            document.getElementById('game-view').classList.add('hidden');
+            document.getElementById('summary-view').classList.remove('hidden');
+            document.getElementById('sum-score').innerText = score;
+            const acc = Math.round((correctHits / totalAttempts) * 100) || 0;
+            document.getElementById('sum-acc').innerText = acc + "%";
+        }
+
+        function toggleReview() {
+            const box = document.getElementById('review-box');
+            if (box.classList.contains('hidden')) {
+                generateReviewContent();
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        function generateReviewContent() {
+            const container = document.getElementById('review-content');
+            const questions = GAME_DATA[currentRoundIndex].questions;
+            container.innerHTML = '';
+            questions.forEach((q, i) => {
+                const entry = document.createElement('div');
+                entry.className = "border-l-4 border-magenta pl-3 py-2 bg-white/5 mb-4";
+                entry.innerHTML = `
+                    <div class="arcade-font text-[8px] text-yellow-400 mb-1">ENTRY_0${i+1} // ${q.details.flags ? q.details.flags[0] : 'NEURAL_GLITCH'}</div>
+                    <div class="text-sm font-bold text-white mb-1"><span class="text-cyan-400">GLITCH:</span> ${q.details.explanation}</div>
+                    <div class="text-[11px] text-green-400 font-bold"><span class="text-white">REALITY:</span> ${q.details.correctInfo}</div>
+                `;
+                container.appendChild(entry);
+            });
+        }
     </script>
 </body>
 </html>

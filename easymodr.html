@@ -249,30 +249,39 @@
 
     <!-- 4. ROUND SUMMARY -->
     <div id="summary-screen" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
-        <div class="bg-black neo-border p-10 max-w-2xl w-full text-center relative transform rotate-1">
-            <h2 class="heavy-font text-5xl text-cyan-400 mb-8">ROUND SUMMARY</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-                <div class="border-4 border-white p-4">
-                    <p class="arcade-font text-[8px] mb-2">ROUND SCORE</p>
-                    <p id="round-score" class="text-3xl heavy-font text-yellow-400">0</p>
-                </div>
-                <div class="border-4 border-white p-4">
-                    <p class="arcade-font text-[8px] mb-2">ACCURACY</p>
-                    <p id="round-acc" class="text-3xl heavy-font text-magenta">0%</p>
-                </div>
-                <div class="border-4 border-white p-4">
-                    <p class="arcade-font text-[8px] mb-2">DETECTIONS</p>
-                    <p id="round-detect" class="text-3xl heavy-font text-green-400">0</p>
-                </div>
+    <div class="bg-black neo-border p-10 max-w-4xl w-full text-center relative transform rotate-1">
+        <h2 class="heavy-font text-5xl text-cyan-400 mb-8">ROUND SUMMARY</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+            <div class="border-4 border-white p-4">
+                <p class="arcade-font text-[8px] mb-2">ROUND SCORE</p>
+                <p id="round-score" class="text-3xl heavy-font text-yellow-400">0</p>
             </div>
+            <div class="border-4 border-white p-4">
+                <p class="arcade-font text-[8px] mb-2">ACCURACY</p>
+                <p id="round-acc" class="text-3xl heavy-font text-magenta">0%</p>
+            </div>
+            <div class="border-4 border-white p-4">
+                <p class="arcade-font text-[8px] mb-2">DETECTIONS</p>
+                <p id="round-detect" class="text-3xl heavy-font text-green-400">0</p>
+            </div>
+        </div>
 
-            <div class="flex flex-col gap-4">
-                <button onclick="initRound(currentRoundIndex)" class="bg-white text-black heavy-font py-4 text-2xl hover:bg-yellow-400">RETRY ROUND</button>
-                <button onclick="showRoundSelection()" class="bg-cyan-400 text-black heavy-font py-4 text-2xl border-4 border-white">CHOOSE OTHER ROUND</button>
+        <div id="review-box" class="hidden text-left mb-8 max-h-80 overflow-y-auto border-4 border-dashed border-cyan-400 p-4 bg-purple-900/20">
+            <h3 class="arcade-font text-xs text-yellow-400 mb-4 border-b-2 border-yellow-400 pb-2">DATA_LOG_ANALYSIS</h3>
+            <div id="review-content" class="space-y-4"></div>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <button onclick="toggleReview()" class="bg-magenta text-white heavy-font py-4 text-xl border-4 border-black hover:bg-white hover:text-black transition-all">REVIEW LOGS</button>
+            
+            <div class="flex flex-col md:flex-row gap-4">
+                <button onclick="initRound(currentRoundIndex)" class="flex-1 bg-white text-black heavy-font py-4 text-2xl hover:bg-yellow-400">RETRY ROUND</button>
+                <button onclick="showRoundSelection()" class="flex-1 bg-cyan-400 text-black heavy-font py-4 text-2xl border-4 border-white">CHANGE ROUND</button>
             </div>
         </div>
     </div>
+</div>
 
     <script>
         function generateDynamicRounds(questionsPerRound = 3) {
@@ -281,8 +290,22 @@
     
     const rounds = [];
     for (let i = 0; i < 3; i++) { // For 3 rounds
-        // 2. Extract a slice of questions for this round
-        const roundQuestions = shuffled.slice(i * questionsPerRound, (i + 1) * questionsPerRound);
+        // 2. Extract and format a slice of questions for this round
+        const roundQuestions = shuffled.slice(i * questionsPerRound, (i + 1) * questionsPerRound).map(q => {
+            return {
+                paragraph: q.paragraph,
+                options: q.options,
+                correctIndex: q.correctIndex,
+                // THIS IS THE CRITICAL ADDITION:
+                // We bundle the extra data so the Review Screen can find it later
+                details: {
+                    explanation: q.explanation,
+                    why: q.whyHallucinated,
+                    flags: q.suspicionFlags,
+                    correctInfo: q.correctInfo
+                }
+            };
+        });
         
         rounds.push({
             roundTitle: `ROUND ${i + 1}`,
@@ -458,6 +481,36 @@
             document.getElementById('round-acc').innerText = `${acc}%`;
             document.getElementById('round-detect').innerText = roundStats.correct;
         }
+
+        function toggleReview() {
+    const box = document.getElementById('review-box');
+    box.classList.toggle('hidden');
+    if (!box.classList.contains('hidden')) {
+        generateReviewContent();
+    }
+}
+
+function generateReviewContent() {
+    const container = document.getElementById('review-content');
+    const questions = GAME_DATA[currentRoundIndex].questions;
+    container.innerHTML = '';
+
+    questions.forEach((q, i) => {
+        // q.details contains the explanation, why, and flags from dataset.js
+        const logEntry = document.createElement('div');
+        logEntry.className = "border-l-4 border-cyan-400 pl-3 py-1";
+        
+        const flagsStr = q.details.flags ? q.details.flags.join(' | ').toUpperCase() : 'UNKNOWN_ERROR';
+
+        logEntry.innerHTML = `
+            <div class="arcade-font text-[8px] text-magenta mb-1">ENTRY_0${i+1} // ${flagsStr}</div>
+            <div class="text-sm font-bold text-white mb-1"><span class="text-yellow-400">GLITCH:</span> ${q.details.explanation}</div>
+            <div class="text-[11px] text-gray-400 italic mb-1">${q.details.why}</div>
+            <div class="text-[11px] text-green-400 font-bold"><span class="text-white">REALITY:</span> ${q.details.correctInfo}</div>
+        `;
+        container.appendChild(logEntry);
+    });
+}
     </script>
 </body>
 </html>
