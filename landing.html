@@ -31,7 +31,6 @@
             text-transform: uppercase;
         }
 
-        /* MAXIMALIST HEADER */
         .glitch-text {
             font-size: clamp(3rem, 10vw, 8rem);
             line-height: 0.9;
@@ -55,7 +54,6 @@
             background-position: 0 0, 0 20px, 20px 20px, 20px 0;
         }
 
-        /* BRUTALIST SHAPES */
         .neuro-card {
             background: #000;
             border: 6px solid #fff;
@@ -71,7 +69,6 @@
 
         .asymmetric-right { transform: rotate(2deg); }
 
-        /* HYPERPOP BUTTON */
         .btn-dopamine {
             background: var(--yellow);
             color: #000;
@@ -91,12 +88,6 @@
             box-shadow: 4px 4px 0px #fff;
         }
 
-        .btn-dopamine:active {
-            transform: translate(4px, 4px);
-            box-shadow: 0px 0px 0px #fff;
-        }
-
-        /* GLITCH ASSETS */
         .blob {
             position: absolute;
             z-index: -1;
@@ -110,7 +101,6 @@
             100% { transform: scale(1.5); opacity: 0.6; }
         }
 
-        /* GAME UI */
         .hallucination-word {
             display: inline-block;
             background: rgba(255,255,255,0.05);
@@ -161,24 +151,18 @@
     </style>
 </head>
 <body class="checker-bg min-h-screen">
-    <!-- Background Blobs -->
     <div class="blob w-96 h-96 bg-magenta top-0 left-0"></div>
     <div class="blob w-96 h-96 bg-cyan bottom-0 right-0" style="animation-delay: -4s;"></div>
 
-    <!-- Navigation -->
     <nav class="p-8 flex justify-between items-center relative z-30">
         <div class="bg-white text-black font-black px-4 py-2 border-4 border-black text-xl -rotate-2">NEURO_GLITCH.exe</div>
         <div class="flex gap-4">
-            <button onclick="showSection('landing')" class="bg-cyan-400 border-4 border-black px-4 py-2 font-bold hover:translate-y-1 transition-all">MANIFESTO</button>
-            <button onclick="window.location.href='choose.html'" 
-           
-class="bg-yellow-400 border-4 border-black px-4 py-2 font-bold hover:translate-y-1 transition-all">
-    PLAY_NOW
-</button>
+            <button onclick="window.location.href='about.html'" class="bg-magenta border-4 border-black px-4 py-2 font-bold text-white hover:translate-y-1 transition-all shadow-[4px_4px_0px_white]">ABOUT</button>
+            
+            <button onclick="window.location.href='choose.html'" class="bg-yellow-400 border-4 border-black px-4 py-2 font-bold hover:translate-y-1 transition-all">PLAY_NOW</button>
         </div>
     </nav>
 
-    <!-- LANDING PAGE SECTION -->
     <main id="landing-section" class="max-w-7xl mx-auto px-6 py-12 relative z-10">
         <div class="relative text-center mb-32">
             <div class="sticker top-[-20px] left-[10%]">STAY ALERT!</div>
@@ -221,13 +205,12 @@ class="bg-yellow-400 border-4 border-black px-4 py-2 font-bold hover:translate-y
         </div>
 
         <div class="text-center py-20">
-            <button onclick="showSection('game')" class="btn-dopamine scale-125">
+            <button onclick="window.location.href='choose.html'" class="btn-dopamine scale-125">
                 START THE CHAOS ⚡
             </button>
         </div>
     </main>
 
-    <!-- GAME SECTION -->
     <main id="game-section" class="max-w-5xl mx-auto px-6 py-12 relative z-10">
         <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
             <div class="bg-white text-black p-4 border-8 border-black -rotate-2 w-full md:w-auto text-center">
@@ -239,9 +222,7 @@ class="bg-yellow-400 border-4 border-black px-4 py-2 font-bold hover:translate-y
         </div>
 
         <div class="neuro-card p-12 mb-12 bg-black border-white">
-            <div id="game-content" class="text-2xl md:text-3xl leading-snug font-bold">
-                <!-- Text segments injected here -->
-            </div>
+            <div id="game-content" class="text-2xl md:text-3xl leading-snug font-bold"></div>
         </div>
 
         <div id="feedback-area" class="min-h-[100px] mb-8">
@@ -259,6 +240,7 @@ class="bg-yellow-400 border-4 border-black px-4 py-2 font-bold hover:translate-y
     </footer>
 
     <script>
+        // ... (Keep existing script same) ...
         const levels = [
             {
                 text: "The James Webb Space Telescope was launched in 2021 and primarily observes infrared light. It successfully captured the first-ever image of an exoplanet in 2004, marking a milestone for NASA's deep space exploration.",
@@ -269,16 +251,6 @@ class="bg-yellow-400 border-4 border-black px-4 py-2 font-bold hover:translate-y
                 text: "George Washington was the first president of the United States. He is famously known for his refusal to wear a crown and for inventing the steam-powered printing press to help spread the Constitution more quickly.",
                 hallucination: "inventing the steam-powered printing press",
                 explanation: "NICE! Washington was busy leading a country, not inventing industrial machinery!"
-            },
-            {
-                text: "In the landmark case of Brown v. Board of Education, the Supreme Court ruled that segregation in public schools was unconstitutional. This decision overturned the 1923 ruling of Smith v. Jenkins which had previously mandated school uniforms in all states.",
-                hallucination: "1923 ruling of Smith v. Jenkins which had previously mandated school uniforms",
-                explanation: "EAGLE EYE! Smith v. Jenkins is a ghost case—it doesn't exist!"
-            },
-            {
-                text: "The Great Wall of China is a series of fortifications built across the northern borders of ancient Chinese states. It is the only man-made structure visible from the Moon with the naked eye, a fact confirmed by Apollo 11 astronauts.",
-                hallucination: "only man-made structure visible from the Moon with the naked eye",
-                explanation: "MYTH BUSTED! No structure is visible from the moon without a telescope!"
             }
         ];
 
@@ -297,13 +269,10 @@ class="bg-yellow-400 border-4 border-black px-4 py-2 font-bold hover:translate-y
             canClick = true;
             document.getElementById('next-btn').classList.add('opacity-30', 'pointer-events-none');
             document.getElementById('feedback-text').innerText = "";
-            
             const level = levels[currentLevel];
             const contentDiv = document.getElementById('game-content');
             contentDiv.innerHTML = "";
-
             const phrases = level.text.split(/(\. |, )/);
-            
             phrases.forEach(phrase => {
                 if (phrase.trim().length === 0) return;
                 const span = document.createElement('span');
@@ -316,9 +285,7 @@ class="bg-yellow-400 border-4 border-black px-4 py-2 font-bold hover:translate-y
 
         function checkAnswer(el, selectedText, level) {
             if (!canClick) return;
-            
             const isCorrect = selectedText.includes(level.hallucination) || level.hallucination.includes(selectedText);
-            
             if (isCorrect) {
                 el.classList.add('correct');
                 score += 100;
@@ -330,7 +297,6 @@ class="bg-yellow-400 border-4 border-black px-4 py-2 font-bold hover:translate-y
                 score = Math.max(0, score - 50);
                 document.getElementById('feedback-text').innerHTML = `<span class="text-magenta bg-white px-4 border-4 border-black inline-block -rotate-2">SYSTEM ERROR! TRY AGAIN.</span>`;
             }
-            
             document.getElementById('score-display').innerText = `SCORE: ${score}`;
         }
 
@@ -338,11 +304,7 @@ class="bg-yellow-400 border-4 border-black px-4 py-2 font-bold hover:translate-y
             currentLevel++;
             if (currentLevel >= levels.length) {
                 currentLevel = 0; 
-                document.getElementById('game-content').innerHTML = `
-                    <div class="text-center py-10">
-                        <h2 class="text-6xl text-yellow-400 mb-4 rotate-2">ULTIMATE WINNER!</h2>
-                        <p class="text-4xl">FINAL SCORE: ${score}</p>
-                    </div>`;
+                document.getElementById('game-content').innerHTML = `<div class="text-center py-10"><h2 class="text-6xl text-yellow-400 mb-4 rotate-2">ULTIMATE WINNER!</h2><p class="text-4xl">FINAL SCORE: ${score}</p></div>`;
                 document.getElementById('next-btn').innerText = "RESTART_DATA_SCRUB";
             } else {
                 initGame();
